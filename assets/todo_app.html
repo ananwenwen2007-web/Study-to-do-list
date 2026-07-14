@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>学习打卡 - 每日进步</title>
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-light: #818CF8;
+  --primary-bg: #EEF2FF;
+  --success: #10B981;
+  --success-bg: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-bg: #FEF3C7;
+  --danger: #EF4444;
+  --danger-bg: #FEE2E2;
+  --gray-50: #F9FAFB;
+  --gray-100: #F3F4F6;
+  --gray-200: #E5E7EB;
+  --gray-300: #D1D5DB;
+  --gray-500: #6B7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  min-height: 100vh;
+  padding-bottom: 80px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Header ─── */
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 20px 16px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header h1 { font-size: 20px; font-weight: 700; }
+.header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+/* ─── Points Bar ─── */
+.points-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+.points-chip {
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+.points-chip .num { font-weight: 700; font-size: 16px; margin-right: 4px; }
+
+/* ─── Tab Bar ─── */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  border-top: 1px solid var(--gray-200);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  font-size: 11px;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: color 0.2s;
+  border: none;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item.active { color: var(--primary); }
+.tab-item .tab-icon { font-size: 22px; margin-bottom: 2px; }
+
+/* ─── Pages ─── */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* ─── Cards ─── */
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Task Item ─── */
+.task-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--gray-50);
+  transition: all 0.2s;
+}
+.task-item.completed {
+  background: var(--success-bg);
+  opacity: 0.8;
+}
+.task-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: transparent;
+}
+.task-check.done {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+.task-info { flex: 1; margin-left: 12px; }
+.task-title { font-size: 15px; font-weight: 500; }
+.task-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+.task-points {
+  background: var(--warning-bg);
+  color: #92400E;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:active { background: #3730A3; }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-outline {
+  background: white;
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── Form ─── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; display: block; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.form-textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+
+/* ─── Modal ─── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-content {
+  background: white;
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-header h3 { font-size: 17px; font-weight: 700; }
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--gray-100);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Reading ─── */
+.reading-text {
+  background: var(--gray-50);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 16px;
+  line-height: 1.8;
+  margin: 12px 0;
+  border-left: 4px solid var(--primary);
+}
+.record-btn {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+}
+.record-btn.recording {
+  animation: pulse 1s infinite;
+  background: #DC2626;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.record-status {
+  text-align: center;
+  font-size: 14px;
+  color: var(--gray-500);
+  margin-top: 8px;
+}
+
+/* ─── Dictation ─── */
+.word-card {
+  background: var(--gray-50);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.word-card .word-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.word-card .word-zh { font-size: 14px; color: var(--gray-500); flex: 1; }
+.word-card .word-input {
+  width: 140px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 15px;
+  text-align: right;
+}
+.word-card .word-input.correct { border-color: var(--success); background: var(--success-bg); }
+.word-card .word-input.wrong { border-color: var(--danger); background: var(--danger-bg); }
+.play-word-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Result ─── */
+.result-card {
+  text-align: center;
+  padding: 24px;
+}
+.result-score {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.result-label { font-size: 14px; color: var(--gray-500); margin-top: 4px; }
+.result-detail {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+}
+.result-item { text-align: center; }
+.result-item .num { font-size: 24px; font-weight: 700; }
+.result-item .label { font-size: 12px; color: var(--gray-500); }
+
+/* ─── Points History ─── */
+.log-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.log-item:last-child { border-bottom: none; }
+.log-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-right: 12px;
+}
+.log-icon.task { background: var(--primary-bg); }
+.log-icon.reading { background: var(--success-bg); }
+.log-icon.dictation { background: var(--warning-bg); }
+.log-info { flex: 1; }
+.log-desc { font-size: 14px; }
+.log-time { font-size: 12px; color: var(--gray-500); }
+.log-points { font-size: 16px; font-weight: 700; color: var(--warning); }
+
+/* ─── Empty State ─── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray-500);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state .text { font-size: 15px; }
+
+/* ─── Badge ─── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-reading { background: #DBEAFE; color: #1E40AF; }
+.badge-dictation { background: #FEF3C7; color: #92400E; }
+.badge-normal { background: var(--gray-100); color: var(--gray-700); }
+
+/* ─── Photo Preview ─── */
+.photo-preview {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+/* ─── Material List ─── */
+.material-item {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--gray-50);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.material-item:active { background: var(--primary-bg); }
+.material-item .title { font-size: 15px; font-weight: 500; }
+.material-item .meta { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+
+/* ─── Progress Bar ─── */
+.progress-bar {
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), #34D399);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* ─── Responsive ─── */
+@media (min-width: 768px) {
+  .page { max-width: 600px; margin: 0 auto; }
+  .tab-bar { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
+  .modal-content { border-radius: 16px; margin-bottom: 20px; }
+}
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--gray-900);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>📚 学习打卡</h1>
+  <div class="subtitle" id="dateDisplay"></div>
+  <div class="points-bar">
+    <div class="points-chip"><span class="num" id="totalPoints">0</span>总积分</div>
+    <div class="points-chip"><span class="num" id="todayPoints">0</span>今日</div>
+    <div class="points-chip"><span class="num" id="streakDays">0</span>🔥连续</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══ Page: Dashboard ═══ -->
+<div class="page active" id="pageDashboard">
+  <div class="card">
+    <div class="card-title">📋 今日任务</div>
+    <div id="todayTaskList"></div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="todayProgress" style="width: 0%"></div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:var(--gray-500);margin-top:4px" id="todayProgressText">0/0 完成</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏆 本周统计</div>
+    <div style="display:flex;gap:16px;text-align:center">
+      <div style="flex:1">
+        <div style="font-size:24px;font-weight:700;color:var(--primary)" id="weekPoints">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">本周积分</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:24px;font-weight:700;color:var(--success)" id="weekCompletions">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">完成任务</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:24px;font-weight:700;color:var(--warning)" id="weekReadings">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">朗读打卡</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:16px">
+    <button class="btn btn-outline" onclick="showParentMode()">👨‍👩‍👦 家长布置任务</button>
+  </div>
+</div>
+
+<!-- ═══ Page: Tasks ═══ -->
+<div class="page" id="pageTasks">
+  <div class="card">
+    <div class="card-title">
+      📝 所有任务
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="showAddTaskModal()">+ 新增</button>
+    </div>
+    <div id="allTaskList"></div>
+  </div>
+</div>
+
+<!-- ═══ Page: Reading ═══ -->
+<div class="page" id="pageReading">
+  <div class="card">
+    <div class="card-title">📖 朗读课文</div>
+    <div id="readingMaterialList"></div>
+  </div>
+
+  <div class="card" id="readingArea" style="display:none">
+    <div class="card-title">
+      <button class="btn btn-outline btn-sm" onclick="backToMaterials()">← 返回</button>
+      <span id="readingTitle" style="margin-left:8px"></span>
+    </div>
+    <div class="reading-text" id="readingText"></div>
+    <div style="text-align:center">
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px">
+        朗读次数: <span id="readCount">0</span>/<span id="targetCount">1</span>
+      </div>
+      <button class="record-btn" id="recordBtn" onclick="toggleRecording()">🎤</button>
+      <div class="record-status" id="recordStatus">点击开始录音</div>
+    </div>
+    <div id="readingResult" style="display:none" class="card" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ═══ Page: Dictation ═══ -->
+<div class="page" id="pageDictation">
+  <div class="card">
+    <div class="card-title">🔤 英语听写</div>
+    <div id="dictationUnitList"></div>
+  </div>
+
+  <div class="card" id="dictationArea" style="display:none">
+    <div class="card-title">
+      <button class="btn btn-outline btn-sm" onclick="backToUnits()">← 返回</button>
+      <span id="dictationUnitName" style="margin-left:8px"></span>
+    </div>
+    <div id="dictationWordList"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-outline" onclick="playAllWords()">🔊 播放全部</button>
+      <button class="btn btn-primary" style="flex:1" onclick="submitDictation()">提交批改</button>
+    </div>
+  </div>
+
+  <div id="dictationResult" style="display:none"></div>
+</div>
+
+<!-- ═══ Page: Points ═══ -->
+<div class="page" id="pagePoints">
+  <div class="card">
+    <div class="card-title">🏆 积分总览</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--primary-bg);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--primary)" id="totalPts">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">累计积分</div>
+      </div>
+      <div style="background:var(--warning-bg);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--warning)" id="streakD">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">连续打卡(天)</div>
+      </div>
+      <div style="background:var(--success-bg);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:var(--success)" id="totalComp">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">完成任务</div>
+      </div>
+      <div style="background:#DBEAFE;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:28px;font-weight:800;color:#1E40AF" id="totalRead">0</div>
+        <div style="font-size:12px;color:var(--gray-500)">朗读达标</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📜 积分记录</div>
+    <div id="pointsLogList"></div>
+  </div>
+</div>
+
+<!-- ═══ Tab Bar ═══ -->
+<div class="tab-bar">
+  <button class="tab-item active" onclick="switchTab('Dashboard', this)">
+    <span class="tab-icon">🏠</span>首页
+  </button>
+  <button class="tab-item" onclick="switchTab('Tasks', this)">
+    <span class="tab-icon">📝</span>任务
+  </button>
+  <button class="tab-item" onclick="switchTab('Reading', this)">
+    <span class="tab-icon">📖</span>朗读
+  </button>
+  <button class="tab-item" onclick="switchTab('Dictation', this)">
+    <span class="tab-icon">🔤</span>听写
+  </button>
+  <button class="tab-item" onclick="switchTab('Points', this)">
+    <span class="tab-icon">🏆</span>积分
+  </button>
+</div>
+
+<!-- ═══ Modal: Add Task ═══ -->
+<div class="modal-overlay" id="modalAddTask">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📝 布置新任务</h3>
+      <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">任务标题</label>
+      <input class="form-input" id="taskTitle" placeholder="如：完成数学练习册P20">
+    </div>
+    <div class="form-group">
+      <label class="form-label">任务描述（可选）</label>
+      <textarea class="form-textarea" id="taskDesc" placeholder="详细说明..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">科目</label>
+        <select class="form-select" id="taskSubject">
+          <option value="">无</option>
+          <option value="语文">语文</option>
+          <option value="数学">数学</option>
+          <option value="英语">英语</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">积分</label>
+        <input class="form-input" id="taskPoints" type="number" value="1" min="1" max="100">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">任务类型</label>
+      <select class="form-select" id="taskType">
+        <option value="normal">普通任务</option>
+        <option value="reading">朗读任务</option>
+        <option value="dictation">听写任务</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="createTask()">✅ 发布任务</button>
+  </div>
+</div>
+
+<!-- ═══ Modal: Photo Upload ═══ -->
+<div class="modal-overlay" id="modalPhoto">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📸 拍照提交</h3>
+      <button class="modal-close" onclick="closeModal('modalPhoto')">✕</button>
+    </div>
+    <div id="photoPreviewArea"></div>
+    <input type="file" accept="image/*" capture="environment" id="photoInput" style="display:none" onchange="previewPhoto(this)">
+    <button class="btn btn-outline btn-block" onclick="document.getElementById('photoInput').click()" style="margin-bottom:12px">
+      📷 拍照 / 选择照片
+    </button>
+    <button class="btn btn-primary btn-block" id="submitPhotoBtn" onclick="submitPhoto()" disabled>
+      ✅ 提交完成
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── State ───
+let currentTasks = [];
+let currentReadingSession = null;
+let currentDictationSession = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let completingTaskId = null;
+
+// ─── Init ───
+document.addEventListener('DOMContentLoaded', () => {
+  updateDateDisplay();
+  loadDashboard();
+  loadPointsSummary();
+});
+
+function updateDateDisplay() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('dateDisplay').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${days[now.getDay()]}`;
+}
+
+// ─── Navigation ───
+function switchTab(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page' + name).classList.add('active');
+  el.classList.add('active');
+
+  if (name === 'Dashboard') loadDashboard();
+  if (name === 'Tasks') loadAllTasks();
+  if (name === 'Reading') loadReadingMaterials();
+  if (name === 'Dictation') loadDictationUnits();
+  if (name === 'Points') loadPointsPage();
+}
+
+// ─── Toast ───
+function showToast(msg, duration = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ─── Modal ───
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+function showParentMode() {
+  switchTab('Tasks', document.querySelectorAll('.tab-item')[1]);
+}
+
+// ─── API Helper ───
+async function api(url, method = 'GET', body = null) {
+  const opts = { method, headers: {} };
+  if (body && !(body instanceof FormData)) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (body instanceof FormData) {
+    opts.body = body;
+  }
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `API Error: ${res.status}`);
+  }
+  return res.json();
+}
+
+// ═══ Dashboard ═══
+async function loadDashboard() {
+  try {
+    const [tasks, summary] = await Promise.all([
+      api('/api/todo/tasks'),
+      api('/api/todo/points/summary')
+    ]);
+    currentTasks = tasks;
+    updatePointsBar(summary);
+
+    const todayTasks = tasks.filter(t => t.is_active);
+    const completedToday = await api('/api/todo/tasks').then(() => {
+      return todayTasks.length; // simplified
+    });
+
+    renderTodayTasks(todayTasks);
+    document.getElementById('weekPoints').textContent = summary.week_points;
+    document.getElementById('weekCompletions').textContent = summary.total_completions;
+    document.getElementById('weekReadings').textContent = summary.total_readings;
+  } catch (e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+function updatePointsBar(s) {
+  document.getElementById('totalPoints').textContent = s.total_points;
+  document.getElementById('todayPoints').textContent = s.today_points;
+  document.getElementById('streakDays').textContent = s.streak_days;
+}
+
+function renderTodayTasks(tasks) {
+  const el = document.getElementById('todayTaskList');
+  if (!tasks.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无任务，请家长布置</div></div>';
+    document.getElementById('todayProgress').style.width = '0%';
+    document.getElementById('todayProgressText').textContent = '0/0 完成';
+    return;
+  }
+  el.innerHTML = tasks.map(t => taskItemHTML(t)).join('');
+  const done = tasks.filter(t => t._completed).length;
+  const pct = Math.round((done / tasks.length) * 100);
+  document.getElementById('todayProgress').style.width = pct + '%';
+  document.getElementById('todayProgressText').textContent = `${done}/${tasks.length} 完成`;
+}
+
+function taskItemHTML(t) {
+  const typeBadge = t.task_type === 'reading' ? '<span class="badge badge-reading">朗读</span>' :
+                    t.task_type === 'dictation' ? '<span class="badge badge-dictation">听写</span>' : '';
+  const subjectTag = t.subject ? `<span style="color:var(--primary)">${t.subject}</span> · ` : '';
+  return `
+    <div class="task-item ${t._completed ? 'completed' : ''}" id="task-${t.id}">
+      <div class="task-check ${t._completed ? 'done' : ''}" onclick="handleTaskComplete(${t.id})">${t._completed ? '✓' : ''}</div>
+      <div class="task-info">
+        <div class="task-title">${t.title} ${typeBadge}</div>
+        <div class="task-meta">${subjectTag}${t.description || ''}</div>
+      </div>
+      <div class="task-points">+${t.points}分</div>
+    </div>
+  `;
+}
+
+async function handleTaskComplete(taskId) {
+  const task = currentTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  // 普通任务直接完成，reading/dictation 跳转到对应页面
+  if (task.task_type === 'reading') {
+    switchTab('Reading', document.querySelectorAll('.tab-item')[2]);
+    return;
+  }
+  if (task.task_type === 'dictation') {
+    switchTab('Dictation', document.querySelectorAll('.tab-item')[3]);
+    return;
+  }
+
+  // 普通任务：弹出拍照提交
+  completingTaskId = taskId;
+  document.getElementById('photoPreviewArea').innerHTML = '';
+  document.getElementById('submitPhotoBtn').disabled = true;
+  document.getElementById('modalPhoto').classList.add('show');
+}
+
+function previewPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photoPreviewArea').innerHTML =
+      `<img src="${e.target.result}" class="photo-preview">`;
+    document.getElementById('submitPhotoBtn').disabled = false;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function submitPhoto() {
+  const input = document.getElementById('photoInput');
+  if (!input.files || !input.files[0]) return;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+    await fetch('/api/todo/upload-photo', { method: 'POST', body: formData });
+
+    // 完成任务
+    const result = await api(`/api/todo/tasks/${completingTaskId}/complete`, 'POST');
+    showToast(`✅ 完成! +${result.points_earned}分`);
+    closeModal('modalPhoto');
+    input.value = '';
+    loadDashboard();
+  } catch (e) {
+    showToast('❌ 提交失败: ' + e.message);
+  }
+}
+
+// ═══ All Tasks ═══
+async function loadAllTasks() {
+  try {
+    const tasks = await api('/api/todo/tasks');
+    currentTasks = tasks;
+    const el = document.getElementById('allTaskList');
+    if (!tasks.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">还没有任务</div></div>';
+      return;
+    }
+    el.innerHTML = tasks.map(t => `
+      <div class="task-item" style="justify-content:space-between">
+        <div class="task-info">
+          <div class="task-title">${t.title} ${t.task_type === 'reading' ? '<span class="badge badge-reading">朗读</span>' : t.task_type === 'dictation' ? '<span class="badge badge-dictation">听写</span>' : ''}</div>
+          <div class="task-meta">${t.subject ? t.subject + ' · ' : ''}${t.points}积分</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})">删除</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function showAddTaskModal() {
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskDesc').value = '';
+  document.getElementById('taskPoints').value = '1';
+  document.getElementById('taskSubject').value = '';
+  document.getElementById('taskType').value = 'normal';
+  document.getElementById('modalAddTask').classList.add('show');
+}
+
+async function createTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) { showToast('请输入任务标题'); return; }
+
+  try {
+    await api('/api/todo/tasks', 'POST', {
+      title,
+      description: document.getElementById('taskDesc').value.trim(),
+      points: parseInt(document.getElementById('taskPoints').value) || 1,
+      subject: document.getElementById('taskSubject').value || null,
+      task_type: document.getElementById('taskType').value,
+    });
+    showToast('✅ 任务已发布');
+    closeModal('modalAddTask');
+    loadDashboard();
+    loadAllTasks();
+  } catch (e) {
+    showToast('❌ 创建失败: ' + e.message);
+  }
+}
+
+async function deleteTask(id) {
+  if (!confirm('确定删除此任务？')) return;
+  try {
+    await api(`/api/todo/tasks/${id}`, 'DELETE');
+    showToast('已删除');
+    loadAllTasks();
+    loadDashboard();
+  } catch (e) {
+    showToast('❌ 删除失败');
+  }
+}
+
+// ═══ Reading ═══
+let readingMaterials = [];
+
+async function loadReadingMaterials() {
+  try {
+    readingMaterials = await api('/api/todo/reading/materials');
+    const el = document.getElementById('readingMaterialList');
+    document.getElementById('readingArea').style.display = 'none';
+    el.style.display = 'block';
+
+    if (!readingMaterials.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📖</div><div class="text">暂无朗读材料</div></div>';
+      return;
+    }
+    el.innerHTML = readingMaterials.map(m => `
+      <div class="material-item" onclick="startReading('${m.id}')">
+        <div class="title">${m.title}</div>
+        <div class="meta">${m.subject} · ${m.text.length}字</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function startReading(materialId) {
+  const material = readingMaterials.find(m => m.id === materialId);
+  if (!material) return;
+
+  try {
+    const result = await api('/api/todo/reading/start', 'POST', {
+      text_content: material.text,
+      target_count: 2,
+    });
+    currentReadingSession = result;
+
+    document.getElementById('readingMaterialList').style.display = 'none';
+    document.getElementById('readingArea').style.display = 'block';
+    document.getElementById('readingTitle').textContent = material.title;
+    document.getElementById('readingText').textContent = material.text;
+    document.getElementById('readCount').textContent = '0';
+    document.getElementById('targetCount').textContent = result.target_count;
+    document.getElementById('readingResult').style.display = 'none';
+  } catch (e) {
+    showToast('❌ 开始朗读失败: ' + e.message);
+  }
+}
+
+function backToMaterials() {
+  document.getElementById('readingMaterialList').style.display = 'block';
+  document.getElementById('readingArea').style.display = 'none';
+  stopRecording();
+}
+
+async function toggleRecording() {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+      await submitReadingAudio(audioBlob);
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    document.getElementById('recordBtn').classList.add('recording');
+    document.getElementById('recordStatus').textContent = '🔴 正在录音... 点击停止';
+  } catch (e) {
+    showToast('❌ 无法访问麦克风: ' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && isRecording) {
+    mediaRecorder.stop();
+    isRecording = false;
+    document.getElementById('recordBtn').classList.remove('recording');
+    document.getElementById('recordStatus').textContent = '处理中...';
+  }
+}
+
+function getSupportedMimeType() {
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return '';
+}
+
+async function submitReadingAudio(audioBlob) {
+  try {
+    // 转 base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result.split(',')[1];
+      try {
+        const result = await api('/api/todo/reading/submit', 'POST', {
+          session_id: currentReadingSession.session_id,
+          audio_base64: base64,
+        });
+
+        document.getElementById('readCount').textContent = result.read_count;
+        document.getElementById('recordStatus').textContent = '点击继续朗读';
+
+        // 显示结果
+        const resultEl = document.getElementById('readingResult');
+        resultEl.style.display = 'block';
+        const pct = Math.round(result.completeness * 100);
+        resultEl.innerHTML = `
+          <div style="text-align:center">
+            <div style="font-size:14px;margin-bottom:8px">完整度: <b style="color:${pct >= 70 ? 'var(--success)' : 'var(--danger)'}">${pct}%</b></div>
+            <div style="font-size:13px;color:var(--gray-500)">识别内容: ${result.recognized_text || '(未识别到内容)'}</div>
+            ${result.is_completed ? `<div style="color:var(--success);font-weight:700;margin-top:8px">🎉 朗读达标! +${result.points_earned}分</div>` :
+              `<div style="color:var(--gray-500);margin-top:8px">还需朗读 ${result.target_count - result.read_count} 次</div>`}
+          </div>
+        `;
+
+        if (result.is_completed) {
+          loadPointsSummary();
+        }
+      } catch (e) {
+        showToast('❌ 提交失败: ' + e.message);
+        document.getElementById('recordStatus').textContent = '点击重新录音';
+      }
+    };
+    reader.readAsDataURL(audioBlob);
+  } catch (e) {
+    showToast('❌ 处理音频失败');
+    document.getElementById('recordStatus').textContent = '点击重新录音';
+  }
+}
+
+// ═══ Dictation ═══
+let wordUnits = [];
+
+async function loadDictationUnits() {
+  try {
+    wordUnits = await api('/api/todo/dictation/units');
+    const el = document.getElementById('dictationUnitList');
+    document.getElementById('dictationArea').style.display = 'none';
+    document.getElementById('dictationResult').style.display = 'none';
+    el.style.display = 'block';
+
+    if (!wordUnits.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🔤</div><div class="text">暂无听写单元</div></div>';
+      return;
+    }
+    el.innerHTML = wordUnits.map((u, i) => `
+      <div class="material-item" onclick="startDictation(${i})">
+        <div class="title">${u.unit}</div>
+        <div class="meta">${u.title} · ${u.words.length}个单词</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function startDictation(unitIndex) {
+  const unit = wordUnits[unitIndex];
+  if (!unit) return;
+
+  try {
+    const result = await api('/api/todo/dictation/start', 'POST', {
+      unit_name: unit.unit,
+      words: unit.words,
+    });
+    currentDictationSession = result;
+
+    document.getElementById('dictationUnitList').style.display = 'none';
+    document.getElementById('dictationArea').style.display = 'block';
+    document.getElementById('dictationResult').style.display = 'none';
+    document.getElementById('dictationUnitName').textContent = `${unit.unit} - ${unit.title}`;
+
+    const wordListEl = document.getElementById('dictationWordList');
+    wordListEl.innerHTML = unit.words.map((w, i) => `
+      <div class="word-card">
+        <div class="word-num">${i + 1}</div>
+        <button class="play-word-btn" onclick="playWord('${w.en}')">🔊</button>
+        <div class="word-zh">${w.zh}</div>
+        <input class="word-input" id="word-input-${i}" placeholder="拼写..." autocomplete="off" autocapitalize="off">
+      </div>
+    `).join('');
+  } catch (e) {
+    showToast('❌ 开始听写失败: ' + e.message);
+  }
+}
+
+function backToUnits() {
+  document.getElementById('dictationUnitList').style.display = 'block';
+  document.getElementById('dictationArea').style.display = 'none';
+  document.getElementById('dictationResult').style.display = 'none';
+}
+
+async function playWord(text) {
+  try {
+    const result = await api('/api/todo/dictation/tts', 'POST', {
+      text,
+      speaker: 'zh_female_vv_uranus_bigtts',
+    });
+    const audio = new Audio(result.audio_url);
+    audio.play();
+  } catch (e) {
+    showToast('❌ 播放失败: ' + e.message);
+  }
+}
+
+async function playAllWords() {
+  if (!currentDictationSession) return;
+  const words = currentDictationSession.words;
+  for (let i = 0; i < words.length; i++) {
+    await playWord(words[i].en);
+    await new Promise(r => setTimeout(r, 2000));
+  }
+}
+
+async function submitDictation() {
+  if (!currentDictationSession) return;
+  const words = currentDictationSession.words;
+  const answers = [];
+
+  for (let i = 0; i < words.length; i++) {
+    const input = document.getElementById(`word-input-${i}`);
+    answers.push({
+      word_index: i,
+      answer: input ? input.value.trim() : '',
+    });
+  }
+
+  try {
+    const result = await api('/api/todo/dictation/submit', 'POST', {
+      session_id: currentDictationSession.session_id,
+      answers,
+    });
+
+    // 显示结果在输入框上
+    if (result.answers) {
+      result.answers.forEach(a => {
+        const input = document.getElementById(`word-input-${a.word_index}`);
+        if (input) {
+          input.classList.add(a.correct ? 'correct' : 'wrong');
+          if (!a.correct) {
+            input.value = `${input.value} → ${a.expected}`;
+          }
+        }
+      });
+    }
+
+    // 显示总分
+    const resultEl = document.getElementById('dictationResult');
+    resultEl.style.display = 'block';
+    const pct = Math.round(result.accuracy * 100);
+    resultEl.innerHTML = `
+      <div class="card result-card">
+        <div class="result-score">${pct}分</div>
+        <div class="result-label">正确率</div>
+        <div class="result-detail">
+          <div class="result-item">
+            <div class="num" style="color:var(--success)">${result.correct_count}</div>
+            <div class="label">正确</div>
+          </div>
+          <div class="result-item">
+            <div class="num" style="color:var(--danger)">${result.total_words - result.correct_count}</div>
+            <div class="label">错误</div>
+          </div>
+          <div class="result-item">
+            <div class="num" style="color:var(--warning)">+${result.points_earned}</div>
+            <div class="label">积分</div>
+          </div>
+        </div>
+        <button class="btn btn-outline" style="margin-top:16px" onclick="backToUnits()">返回单元列表</button>
+      </div>
+    `;
+
+    if (result.points_earned > 0) loadPointsSummary();
+  } catch (e) {
+    showToast('❌ 提交失败: ' + e.message);
+  }
+}
+
+// ═══ Points ═══
+async function loadPointsPage() {
+  try {
+    const [summary, logs] = await Promise.all([
+      api('/api/todo/points/summary'),
+      api('/api/todo/points/logs?limit=50'),
+    ]);
+
+    document.getElementById('totalPts').textContent = summary.total_points;
+    document.getElementById('streakD').textContent = summary.streak_days;
+    document.getElementById('totalComp').textContent = summary.total_completions;
+    document.getElementById('totalRead').textContent = summary.total_readings;
+
+    const logEl = document.getElementById('pointsLogList');
+    if (!logs.length) {
+      logEl.innerHTML = '<div class="empty-state"><div class="icon">🏆</div><div class="text">暂无积分记录</div></div>';
+      return;
+    }
+
+    const iconMap = { task: '📝', reading: '📖', dictation: '🔤' };
+    logEl.innerHTML = logs.map(l => `
+      <div class="log-item">
+        <div class="log-icon ${l.source_type}">${iconMap[l.source_type] || '⭐'}</div>
+        <div class="log-info">
+          <div class="log-desc">${l.description || l.source_type}</div>
+          <div class="log-time">${formatTime(l.created_at)}</div>
+        </div>
+        <div class="log-points">+${l.points}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function loadPointsSummary() {
+  try {
+    const s = await api('/api/todo/points/summary');
+    updatePointsBar(s);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+</script>
+</body>
+</html>
