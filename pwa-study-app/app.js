@@ -200,10 +200,7 @@ let currentTab = 'tabTasks';
 let recording = false;
 let mediaRecorder = null;
 let audioChunks = [];
-let dictationWords = [];
 let currentWordIndex = 0;
-let dictationCorrect = 0;
-let dictationTotal = 0;
 let currentPhotoTaskId = null;
 let selectedDate = getTodayStr(); // 当前选中的日期
 let pendingAction = null; // 待执行的受保护操作
@@ -229,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPoints();
   renderWeeklyStats();
   initReadingSelect();
-  initDictationSelect();
+  initDictation();
   initPhotoUpload();
   initDateNav();
   initSettings();
@@ -309,15 +306,7 @@ function initModalButtons() {
   const photoPlaceholder = document.getElementById('photoPlaceholder');
   if (photoPlaceholder) photoPlaceholder.addEventListener('click', triggerPhotoInput);
 
-  // 听写按钮
-  const btnStart = document.getElementById('btnStartDictation');
-  if (btnStart) btnStart.addEventListener('click', startDictation);
-
-  const btnStop = document.getElementById('btnStopDictation');
-  if (btnStop) btnStop.addEventListener('click', stopDictation);
-
-  const btnSubmit = document.getElementById('btnSubmitAnswer');
-  if (btnSubmit) btnSubmit.addEventListener('click', submitAnswer);
+  // 听写按钮已移至 initDictation()
 
   // 单词输入框回车提交
   const wordAnswer = document.getElementById('wordAnswer');
@@ -750,220 +739,249 @@ function stopRecording() {
   }
 }
 
-// ===== 英语听写 =====
-function initDictationSelect() {
-  const select = document.getElementById('dictationSelect');
-  if (!select) return;
+// ===== 英语听写（打怪闯关模式）=====
+const DICT_WORDS_PER_ROUND = 20;
 
-  select.innerHTML = '<option value="">-- 选择单元 --</option>';
+let dictState = {
+  textbookId: '', unitId: '',
+  allWords: [], studyIndex: 0, studyWords: [],
+  round: 1, queue: [], currentIndex: 0,
+  correct: [], wrong: [], totalRounds: 0,
+  allWrongEver: [], phase: 'select'
+};
 
-  if (TEXTBOOK_DATA.english) {
-    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
-      Object.keys(TEXTBOOK_DATA.english[publisher]).forEach(grade => {
-        Object.keys(TEXTBOOK_DATA.english[publisher][grade]).forEach(unit => {
-          const opt = document.createElement('option');
-          opt.value = 'en|' + publisher + '|' + grade + '|' + unit;
-          opt.textContent = publisher + ' ' + grade + ' ' + unit;
-          select.appendChild(opt);
-        });
-      });
-    });
-  }
+function initDictation() {
+  const sel = document.getElementById('dictationTextbook');
+  if (sel) sel.addEventListener('change', onDictTextbookChange);
+  const unitSel = document.getElementById('dictationUnit');
+  if (unitSel) unitSel.addEventListener('change', onDictUnitChange);
+  const btnStudy = document.getElementById('btnStartStudy');
+  if (btnStudy) btnStudy.addEventListener('click', () => showDictStep('study'));
+  const btnPrev = document.getElementById('btnPrevWord');
+  const btnNext = document.getElementById('btnNextWord');
+  if (btnPrev) btnPrev.addEventListener('click', () => navigateStudyWord(-1));
+  if (btnNext) btnNext.addEventListener('click', () => navigateStudyWord(1));
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) btnStartDict.addEventListener('click', startDictationRound);
+  const btnPlay = document.getElementById('btnPlayWord');
+  if (btnPlay) btnPlay.addEventListener('click', playCurrentWord);
+  const btnSubmit = document.getElementById('btnSubmitDict');
+  if (btnSubmit) btnSubmit.addEventListener('click', submitDictAnswer);
+  const dictInput = document.getElementById('dictInput');
+  if (dictInput) dictInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitDictAnswer(); });
+  const btnReview = document.getElementById('btnReviewWrong');
+  if (btnReview) btnReview.addEventListener('click', startWrongReview);
+  const btnFinish = document.getElementById('btnFinishDict');
+  if (btnFinish) btnFinish.addEventListener('click', finishDictation);
+}
 
-  select.addEventListener('change', () => {
-    const val = select.value;
-    const wordEl = document.getElementById('currentWord');
-    if (!wordEl) return;
-
-    if (!val) {
-      wordEl.innerHTML = '<p class="placeholder-text">选择单元后点击开始听写</p>';
-      return;
-    }
-
-    const parts = val.split('|');
-    const words = getTextbookWords(parts[0], parts[1], parts[2], parts[3]);
-    if (words) {
-      wordEl.innerHTML = '<div><div class="word-display">' + words.length + ' 个单词</div><div class="word-hint">点击"开始听写"开始</div></div>';
-    }
+function onDictTextbookChange() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const unitSel = document.getElementById('dictationUnit');
+  unitSel.innerHTML = '<option value="">选择单元</option>';
+  document.getElementById('btnStartStudy').style.display = 'none';
+  document.getElementById('dictWordCount').textContent = '';
+  if (!tid) return;
+  const tb = TEXTBOOK_DATA.english[tid];
+  if (!tb) return;
+  Object.keys(tb.units).forEach(uid => {
+    const u = tb.units[uid];
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = u.title;
+    unitSel.appendChild(opt);
   });
 }
 
-function loadDictationForTask(task) {
-  if (task.wordList && task.wordList.length > 0) {
-    dictationWords = [...task.wordList];
-  } else {
-    dictationWords = ['hello', 'world', 'student', 'teacher', 'school'];
-  }
-
-  currentWordIndex = 0;
-  dictationCorrect = 0;
-  dictationTotal = 0;
-
-  const wordEl = document.getElementById('currentWord');
-  if (wordEl) {
-    wordEl.innerHTML = '<div><div class="word-display">' + dictationWords.length + ' 个单词</div><div class="word-hint">点击"开始听写"开始</div></div>';
-  }
-
-  const answerDiv = document.getElementById('answerInput');
-  if (answerDiv) answerDiv.style.display = 'none';
-
-  const resultEl = document.getElementById('dictationResult');
-  if (resultEl) {
-    resultEl.className = 'dictation-result';
-    resultEl.textContent = '';
-  }
-
-  // 保存任务ID
-  const btnStart = document.getElementById('btnStartDictation');
-  if (btnStart) btnStart.dataset.taskId = task.id;
+function onDictUnitChange() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const uid = document.getElementById('dictationUnit').value;
+  const btnStudy = document.getElementById('btnStartStudy');
+  const countEl = document.getElementById('dictWordCount');
+  if (!tid || !uid) { btnStudy.style.display = 'none'; countEl.textContent = ''; return; }
+  const words = TEXTBOOK_DATA.english[tid].units[uid].words;
+  countEl.textContent = '本单元共 ' + words.length + ' 个单词';
+  btnStudy.style.display = 'block';
 }
 
-function startDictation() {
-  // 先从选择器获取单词
-  const select = document.getElementById('dictationSelect');
-  if (select && select.value && dictationWords.length === 0) {
-    const parts = select.value.split('|');
-    const words = getTextbookWords(parts[0], parts[1], parts[2], parts[3]);
-    if (words) {
-      dictationWords = words.map(w => w.word);
-    }
-  }
-
-  if (dictationWords.length === 0) {
-    showToast('请先选择单元或添加听写任务');
-    return;
-  }
-
-  currentWordIndex = 0;
-  dictationCorrect = 0;
-  dictationTotal = 0;
-
-  const btnStart = document.getElementById('btnStartDictation');
-  const btnStop = document.getElementById('btnStopDictation');
-  if (btnStart) btnStart.style.display = 'none';
-  if (btnStop) btnStop.style.display = 'flex';
-
-  speakCurrentWord();
+function showDictStep(step) {
+  dictState.phase = step;
+  ['dictStepSelect','dictStepStudy','dictStepDictate','dictStepResult','dictStepSuccess'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  const map = {select:'dictStepSelect',study:'dictStepStudy',dictate:'dictStepDictate',result:'dictStepResult',success:'dictStepSuccess'};
+  const el = document.getElementById(map[step]); if (el) el.style.display = 'block';
+  if (step === 'study') initStudyPhase();
 }
 
-function speakCurrentWord() {
-  if (currentWordIndex >= dictationWords.length) {
-    finishDictation();
-    return;
-  }
-
-  const word = dictationWords[currentWordIndex];
-  const wordEl = document.getElementById('currentWord');
-  if (wordEl) {
-    wordEl.innerHTML = '<div><div class="word-display">第 ' + (currentWordIndex + 1) + '/' + dictationWords.length + ' 个</div><div class="word-hint">仔细听，然后输入你听到的单词</div></div>';
-  }
-
-  const answerDiv = document.getElementById('answerInput');
-  if (answerDiv) answerDiv.style.display = 'flex';
-
-  const answerInput = document.getElementById('wordAnswer');
-  if (answerInput) {
-    answerInput.value = '';
-    setTimeout(() => answerInput.focus(), 100);
-  }
-
-  const resultEl = document.getElementById('dictationResult');
-  if (resultEl) {
-    resultEl.className = 'dictation-result';
-    resultEl.textContent = '';
-  }
-
-  speakWord(word);
+function initStudyPhase() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const uid = document.getElementById('dictationUnit').value;
+  if (!tid || !uid) return;
+  dictState.textbookId = tid; dictState.unitId = uid;
+  dictState.allWords = TEXTBOOK_DATA.english[tid].units[uid].words;
+  dictState.studyWords = [...dictState.allWords];
+  dictState.studyIndex = 0;
+  renderStudyCard();
 }
 
-function speakWord(word) {
-  if (!('speechSynthesis' in window)) return;
-
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(word);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.8;
-
-  const voices = window.speechSynthesis.getVoices();
-  const enVoice = voices.find(v => v.lang.startsWith('en'));
-  if (enVoice) utterance.voice = enVoice;
-
-  window.speechSynthesis.speak(utterance);
-
-  utterance.onend = () => {
-    setTimeout(() => {
-      const u2 = new SpeechSynthesisUtterance(word);
-      u2.lang = 'en-US';
-      u2.rate = 0.8;
-      if (enVoice) u2.voice = enVoice;
-      window.speechSynthesis.speak(u2);
-    }, 800);
-  };
+function renderStudyCard() {
+  const words = dictState.studyWords;
+  const idx = dictState.studyIndex;
+  if (idx < 0 || idx >= words.length) return;
+  const w = words[idx];
+  document.getElementById('studyWord').textContent = w.word;
+  document.getElementById('studyPhonetic').textContent = w.phonetic || '';
+  document.getElementById('studyMeaning').textContent = w.meaning;
+  document.getElementById('studyTip').textContent = w.tip || '';
+  document.getElementById('studyCounter').textContent = (idx+1) + '/' + words.length;
 }
 
-function submitAnswer() {
-  const answerInput = document.getElementById('wordAnswer');
-  if (!answerInput) return;
+function navigateStudyWord(offset) {
+  const words = dictState.studyWords;
+  dictState.studyIndex = Math.max(0, Math.min(words.length-1, dictState.studyIndex + offset));
+  renderStudyCard();
+}
 
-  const answer = answerInput.value.trim().toLowerCase();
+function startDictationRound() {
+  dictState.round = dictState.totalRounds + 1;
+  dictState.totalRounds = dictState.round;
+  dictState.correct = []; dictState.wrong = []; dictState.allWrongEver = [];
+  dictState.currentIndex = 0;
+
+  const wrongBook = getWrongBook();
+  const allWords = dictState.allWords;
+  let queue = [];
+
+  if (wrongBook.length > 0) {
+    const ww = allWords.filter(w => wrongBook.includes(w.word));
+    queue = shuffleArray([...ww]);
+  }
+  const remaining = allWords.filter(w => !queue.find(q => q.word === w.word));
+  const needed = DICT_WORDS_PER_ROUND - queue.length;
+  queue = queue.concat(shuffleArray([...remaining]).slice(0, Math.max(0, needed)));
+  if (queue.length > DICT_WORDS_PER_ROUND) queue = shuffleArray(queue).slice(0, DICT_WORDS_PER_ROUND);
+
+  dictState.queue = shuffleArray(queue);
+  showDictStep('dictate');
+  renderDictProgress();
+  setTimeout(() => playCurrentWord(), 300);
+}
+
+function renderDictProgress() {
+  document.getElementById('dictRoundLabel').textContent = '第' + dictState.round + '轮';
+  document.getElementById('dictProgressText').textContent = (dictState.currentIndex+1) + '/' + dictState.queue.length;
+  document.getElementById('dictFeedback').textContent = '';
+  document.getElementById('dictFeedback').style.color = '';
+  const input = document.getElementById('dictInput'); if (input) input.value = '';
+}
+
+function playCurrentWord() {
+  const idx = dictState.currentIndex;
+  if (idx >= dictState.queue.length) return;
+  speak(dictState.queue[idx].word, 'en-US');
+}
+
+function submitDictAnswer() {
+  const input = document.getElementById('dictInput');
+  if (!input) return;
+  const answer = input.value.trim().toLowerCase();
   if (!answer) return;
 
-  const correct = dictationWords[currentWordIndex].toLowerCase();
-  dictationTotal++;
+  const word = dictState.queue[dictState.currentIndex];
+  const isCorrect = answer === word.word.toLowerCase();
+  const feedback = document.getElementById('dictFeedback');
 
-  const resultEl = document.getElementById('dictationResult');
-  if (!resultEl) return;
-
-  if (answer === correct) {
-    dictationCorrect++;
-    resultEl.className = 'dictation-result show correct';
-    resultEl.textContent = '✅ 正确！';
+  if (isCorrect) {
+    dictState.correct.push(word);
+    feedback.textContent = '✅ 正确！'; feedback.style.color = '#22c55e';
   } else {
-    resultEl.className = 'dictation-result show wrong';
-    resultEl.textContent = '❌ 正确答案：' + dictationWords[currentWordIndex];
+    dictState.wrong.push(word);
+    if (!dictState.allWrongEver.find(w => w.word === word.word)) dictState.allWrongEver.push(word);
+    feedback.textContent = '❌ 正确答案：' + word.word; feedback.style.color = '#ef4444';
   }
 
-  currentWordIndex++;
-  setTimeout(() => speakCurrentWord(), 1500);
+  setTimeout(() => {
+    dictState.currentIndex++;
+    if (dictState.currentIndex >= dictState.queue.length) showDictResult();
+    else { renderDictProgress(); playCurrentWord(); }
+  }, 1200);
 }
 
-function stopDictation() {
-  finishDictation();
+function showDictResult() {
+  const total = dictState.queue.length;
+  const cc = dictState.correct.length;
+  const wc = dictState.wrong.length;
+  updateWrongBook(dictState.allWrongEver.map(w => w.word));
+
+  document.getElementById('resultSummary').innerHTML =
+    '<h3>第' + dictState.round + '轮结果</h3>' +
+    '<p style="font-size:24px;font-weight:700;color:' + (wc===0?'#22c55e':'#f59e0b') + '">' + cc + '/' + total + ' 正确</p>';
+
+  document.getElementById('resultCorrect').innerHTML =
+    '<h4>✅ 已掌握 (' + cc + '个)</h4><div class="result-word-list">' +
+    (dictState.correct.map(w => w.word).join('、') || '无') + '</div>';
+
+  if (wc > 0) {
+    document.getElementById('resultWrong').style.display = 'block';
+    document.getElementById('resultWrong').innerHTML =
+      '<h4>❌ 出错 (' + wc + '个) → 已加入错题本</h4><div class="result-word-list">' +
+      dictState.wrong.map(w => w.word + ' ' + (w.meaning||'')).join('<br>') + '</div>';
+    document.getElementById('btnReviewWrong').style.display = 'block';
+    document.getElementById('btnReviewWrong').textContent = '📖 学习错题后继续（还剩' + wc + '个）';
+    showDictStep('result');
+  } else {
+    showDictSuccess();
+  }
+}
+
+function startWrongReview() {
+  dictState.studyWords = [...dictState.wrong];
+  dictState.studyIndex = 0;
+  showDictStep('study');
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) {
+    btnStartDict.textContent = '🎧 听写错题（' + dictState.wrong.length + '个）';
+    btnStartDict.onclick = function() {
+      dictState.queue = shuffleArray([...dictState.wrong]);
+      dictState.correct = []; dictState.wrong = []; dictState.allWrongEver = [];
+      dictState.currentIndex = 0; dictState.round++; dictState.totalRounds = dictState.round;
+      showDictStep('dictate'); renderDictProgress();
+      setTimeout(() => playCurrentWord(), 300);
+      btnStartDict.textContent = '🎧 开始听写';
+      btnStartDict.onclick = startDictationRound;
+    };
+  }
+}
+
+function showDictSuccess() {
+  document.getElementById('successDetail').textContent =
+    '共用了 ' + dictState.totalRounds + ' 轮，全部掌握！';
+  showDictStep('success');
 }
 
 function finishDictation() {
-  const btnStart = document.getElementById('btnStartDictation');
-  const btnStop = document.getElementById('btnStopDictation');
-  if (btnStart) btnStart.style.display = 'flex';
-  if (btnStop) btnStop.style.display = 'none';
+  clearWrongBookForUnit(dictState.textbookId, dictState.unitId);
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) { btnStartDict.textContent = '🎧 开始听写'; btnStartDict.onclick = startDictationRound; }
+  showDictStep('select');
+  showToast('🎉 听写任务完成！');
+}
 
-  const wordEl = document.getElementById('currentWord');
-  if (wordEl) {
-    wordEl.innerHTML = '<div><div class="word-display">听写结束</div><div class="word-hint">正确 ' + dictationCorrect + '/' + dictationTotal + '</div></div>';
-  }
-
-  const answerDiv = document.getElementById('answerInput');
-  if (answerDiv) answerDiv.style.display = 'none';
-
-  const resultEl = document.getElementById('dictationResult');
-  if (resultEl) {
-    resultEl.className = 'dictation-result show';
-    resultEl.textContent = '📊 听写结果：正确 ' + dictationCorrect + '/' + dictationTotal + ' (' + (dictationTotal > 0 ? Math.round(dictationCorrect / dictationTotal * 100) : 0) + '%)';
-  }
-
-  // 如果正确率 >= 60%，标记任务完成
-  if (dictationTotal > 0 && dictationCorrect / dictationTotal >= 0.6) {
-    const btnStart = document.getElementById('btnStartDictation');
-    const taskId = btnStart ? btnStart.dataset.taskId : null;
-    if (taskId) {
-      completeTaskById(taskId, '听写完成');
-    }
-    showToast('🎉 听写完成！正确率 ' + Math.round(dictationCorrect / dictationTotal * 100) + '%');
-  } else if (dictationTotal > 0) {
-    showToast('正确率 ' + Math.round(dictationCorrect / dictationTotal * 100) + '%，继续加油！');
-  }
-
-  dictationWords = [];
+function getWrongBook() { return Store.get('wrongBook', []); }
+function updateWrongBook(words) {
+  const book = getWrongBook();
+  words.forEach(w => { if (!book.includes(w)) book.push(w); });
+  Store.set('wrongBook', book);
+}
+function clearWrongBookForUnit(tid, uid) {
+  const book = getWrongBook();
+  const uw = TEXTBOOK_DATA.english[tid]?.units[uid]?.words.map(w => w.word) || [];
+  Store.set('wrongBook', book.filter(w => !uw.includes(w)));
+}
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
 }
 
 // ===== 拍照提交 =====
@@ -1158,11 +1176,10 @@ function confirmPassword() {
   if (!input) return;
 
   if (verifyPassword(input.value)) {
+    const action = pendingAction; // 先保存回调
+    pendingAction = null; // 立即清空，防止重复触发
     closePasswordModal();
-    if (pendingAction) {
-      pendingAction();
-      pendingAction = null;
-    }
+    if (action) action(); // 再执行回调
   } else {
     if (errorEl) {
       errorEl.style.display = 'block';
