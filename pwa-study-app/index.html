@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="学习助手">
+  <meta name="theme-color" content="#4f46e5">
+  <title>学习小助手</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <h1 class="app-title"> 学习小助手</h1>
+      <div class="points-badge" id="pointsBadge">
+        <span class="points-icon">⭐</span>
+        <span class="points-value" id="totalPoints">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- Tab: Tasks -->
+    <section class="tab-content active" id="tabTasks">
+      <div class="section-header">
+        <h2>📋 今日任务</h2>
+        <button class="btn-add" id="btnAddTask" title="添加任务">＋</button>
+      </div>
+      <div class="task-list" id="taskList">
+        <div class="empty-state" id="emptyTasks">
+          <div class="empty-icon">📝</div>
+          <p>今天还没有任务哦</p>
+          <p class="empty-hint">点击右上角 ＋ 添加任务</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Reading -->
+    <section class="tab-content" id="tabReading">
+      <div class="section-header">
+        <h2>🎤 朗读打卡</h2>
+      </div>
+      <div class="reading-panel">
+        <div class="textbook-selector">
+          <label>选择课文：</label>
+          <select id="readingSelect">
+            <option value="">-- 选择课文 --</option>
+          </select>
+        </div>
+        <div class="reading-content" id="readingContent">
+          <p class="placeholder-text">请先选择一篇课文</p>
+        </div>
+        <div class="reading-controls">
+          <button class="btn-record" id="btnRecord">
+            <span class="record-icon">🎙️</span>
+            <span class="record-text">开始录音</span>
+          </button>
+          <div class="record-status" id="recordStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Dictation -->
+    <section class="tab-content" id="tabDictation">
+      <div class="section-header">
+        <h2>🔤 英语听写</h2>
+      </div>
+      <div class="dictation-panel">
+        <div class="textbook-selector">
+          <label>选择单元：</label>
+          <select id="dictationSelect">
+            <option value="">-- 选择单元 --</option>
+          </select>
+        </div>
+        <div class="dictation-controls">
+          <button class="btn-start-dictation" id="btnStartDictation">
+            <span>🔊</span> 开始听写
+          </button>
+          <button class="btn-stop-dictation" id="btnStopDictation" style="display:none">
+            <span>️</span> 结束听写
+          </button>
+        </div>
+        <div class="dictation-area" id="dictationArea">
+          <div class="current-word" id="currentWord">
+            <p class="placeholder-text">选择单元后点击开始听写</p>
+          </div>
+          <div class="answer-input" id="answerInput" style="display:none">
+            <input type="text" id="wordAnswer" placeholder="输入你听到的单词" autocomplete="off">
+            <button class="btn-submit-answer" id="btnSubmitAnswer">确认</button>
+          </div>
+        </div>
+        <div class="dictation-result" id="dictationResult"></div>
+      </div>
+    </section>
+
+    <!-- Tab: Points -->
+    <section class="tab-content" id="tabPoints">
+      <div class="section-header">
+        <h2>🏆 积分中心</h2>
+      </div>
+      <div class="points-summary">
+        <div class="points-card total">
+          <div class="points-card-icon">🌟</div>
+          <div class="points-card-info">
+            <div class="points-card-label">总积分</div>
+            <div class="points-card-value" id="summaryTotal">0</div>
+          </div>
+        </div>
+        <div class="points-card today">
+          <div class="points-card-icon">📅</div>
+          <div class="points-card-info">
+            <div class="points-card-label">今日积分</div>
+            <div class="points-card-value" id="summaryToday">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="points-history">
+        <h3>📋 积分记录</h3>
+        <div class="history-list" id="pointsHistory">
+          <div class="empty-state">
+            <p>还没有积分记录</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="tabTasks">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">任务</span>
+    </button>
+    <button class="nav-item" data-tab="tabReading">
+      <span class="nav-icon">🎤</span>
+      <span class="nav-label">朗读</span>
+    </button>
+    <button class="nav-item" data-tab="tabDictation">
+      <span class="nav-icon">🔤</span>
+      <span class="nav-label">听写</span>
+    </button>
+    <button class="nav-item" data-tab="tabPoints">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">积分</span>
+    </button>
+  </nav>
+
+  <!-- Add Task Modal -->
+  <div class="modal-overlay" id="addTaskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3> 添加任务</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>任务名称</label>
+          <input type="text" id="taskTitle" placeholder="例如：完成数学作业第三章">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>科目</label>
+            <select id="taskSubject">
+              <option value="语文">语文</option>
+              <option value="数学">数学</option>
+              <option value="英语">英语</option>
+              <option value="物理">物理</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>积分</label>
+            <input type="number" id="taskPoints" value="5" min="1" max="50">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>任务类型</label>
+          <div class="type-selector">
+            <label class="type-option">
+              <input type="radio" name="taskType" value="normal" checked>
+              <span>📝 普通</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="taskType" value="reading">
+              <span>🎤 朗读</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="taskType" value="dictation">
+              <span>🔤 听写</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group" id="textbookSelectorGroup" style="display:none">
+          <label>选择教材内容</label>
+          <select id="taskTextbook">
+            <option value="">-- 手动输入 --</option>
+          </select>
+        </div>
+        <div class="form-group" id="wordListGroup" style="display:none">
+          <label>单词列表（JSON 格式）</label>
+          <textarea id="taskWordList" rows="3" placeholder='["apple", "banana", "orange"]'></textarea>
+        </div>
+        <div class="form-group" id="readingContentGroup" style="display:none">
+          <label>课文内容</label>
+          <textarea id="taskReadingContent" rows="4" placeholder="粘贴课文内容..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="taskDate">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancelTask">取消</button>
+        <button class="btn-save" id="btnSaveTask">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Upload Modal -->
+  <div class="modal-overlay" id="photoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📸 拍照提交</h3>
+        <button class="modal-close" id="closePhotoModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="photo-area">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+          <div class="photo-placeholder" id="photoPlaceholder">
+            <span class="photo-icon"></span>
+            <p>点击拍照或选择照片</p>
+          </div>
+          <img id="photoPreview" style="display:none" alt="照片预览">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancelPhoto">取消</button>
+        <button class="btn-save" id="btnConfirmPhoto">确认完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
