@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import json
-import os
 import threading
 import traceback
 import logging
@@ -26,8 +25,6 @@ from coze_coding_utils.helper.stream_runner import AgentStreamRunner, WorkflowSt
 from storage.database.db import get_session, get_engine
 from storage.memory.memory_saver import get_memory_saver
 from storage.database.shared.model import Base
-from storage.database.todo_models import Base as TodoBase
-from storage.database.todo_models import Task, TaskCompletion, ReadingSession, DictationSession, PointsLog
 from coze_coding_utils.async_tasks import (
     AsyncTaskRuntime,
     AsyncTaskStorageError,
@@ -276,9 +273,6 @@ async def lifespan(app: FastAPI):
     else:
         base = graph_helper.get_graph_instance("graphs.graph")
         sync_graph = base.builder.compile()
-    # Create todo tables
-    Base.metadata.create_all(bind=engine)
-    TodoBase.metadata.create_all(bind=engine)
     global async_graph, async_runtime
     async_graph = base.builder.compile(checkpointer=checkpointer)
     service.set_graph(sync_graph)
@@ -291,19 +285,6 @@ async def lifespan(app: FastAPI):
         await async_runtime.shutdown()
 
 app = FastAPI(lifespan=lifespan)
-
-# ─── To-Do List 学习管理系统路由 ───
-from tools.todo_routes import router as todo_router
-from fastapi.responses import HTMLResponse
-
-app.include_router(todo_router)
-
-@app.get("/", response_class=HTMLResponse)
-async def serve_todo_app():
-    """Serve the To-Do List web application"""
-    html_path = os.path.join(os.getenv("COZE_WORKSPACE_PATH", "/workspace/projects"), "assets", "todo_app.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
 
 # OpenAI 兼容接口处理器
 openai_handler = OpenAIChatHandler(service)
