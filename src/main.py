@@ -289,6 +289,21 @@ app = FastAPI(lifespan=lifespan)
 # OpenAI 兼容接口处理器
 openai_handler = OpenAIChatHandler(service)
 
+# ─── Study To-Do List Routes ─────────────────────────────────────────────────
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from tools.todo_routes import router as todo_router
+import pathlib as _pathlib
+
+app.include_router(todo_router)
+_static_dir = _pathlib.Path(__file__).parent / "static"
+if _static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(str(_static_dir / "index.html"))
+
 
 @app.post("/async_run")
 async def http_async_run(request: Request) -> dict:

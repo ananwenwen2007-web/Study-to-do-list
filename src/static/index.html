@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Study To-Do List</title>
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-light: #818CF8;
+  --primary-bg: #EEF2FF;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --gray-50: #F9FAFB;
+  --gray-100: #F3F4F6;
+  --gray-200: #E5E7EB;
+  --gray-300: #D1D5DB;
+  --gray-500: #6B7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 20px 16px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+.header h1 { font-size: 22px; font-weight: 700; }
+.header .points-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  border-top: 1px solid var(--gray-200);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px 8px;
+  cursor: pointer;
+  color: var(--gray-500);
+  font-size: 11px;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item.active { color: var(--primary); }
+.tab-item .tab-icon { font-size: 22px; margin-bottom: 2px; }
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.task-card .task-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.task-card .task-check.done {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+.task-card .task-info { flex: 1; }
+.task-card .task-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.task-card .task-meta { font-size: 13px; color: var(--gray-500); display: flex; gap: 8px; flex-wrap: wrap; }
+.task-card .task-points {
+  background: var(--primary-bg);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.task-card .task-actions { display: flex; gap: 8px; margin-top: 8px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:active { background: #3730A3; }
+.btn-success { background: var(--success); color: white; }
+.btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-block { width: 100%; justify-content: center; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--gray-700); }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+.form-group textarea { min-height: 80px; resize: vertical; }
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: white;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal h2 { font-size: 18px; margin-bottom: 16px; }
+.recording-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+.record-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+}
+.record-btn.recording {
+  animation: pulse 1.5s infinite;
+  background: #DC2626;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(239,68,68,0.5); }
+}
+.record-status { margin-top: 12px; font-size: 14px; color: var(--gray-500); }
+.result-card {
+  background: var(--gray-50);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.result-card.success { background: #ECFDF5; border: 1px solid #A7F3D0; }
+.result-card.fail { background: #FEF2F2; border: 1px solid #FECACA; }
+.dictation-word {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.dictation-word .word-num { font-weight: 600; color: var(--primary); width: 24px; }
+.dictation-word .word-play {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dictation-word input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  font-size: 15px;
+}
+.dictation-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+  font-size: 14px;
+}
+.dictation-result-item .correct { color: var(--success); }
+.dictation-result-item .wrong { color: var(--danger); }
+.points-total {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-radius: var(--radius);
+  color: white;
+  margin-bottom: 16px;
+}
+.points-total .num { font-size: 48px; font-weight: 800; }
+.points-total .label { font-size: 14px; opacity: 0.8; }
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.history-item .hi-left { flex: 1; }
+.history-item .hi-desc { font-size: 14px; }
+.history-item .hi-time { font-size: 12px; color: var(--gray-500); }
+.history-item .hi-points { font-weight: 700; color: var(--success); font-size: 16px; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+.empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
+.photo-preview { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 8px; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-reading { background: #DBEAFE; color: #1D4ED8; }
+.badge-dictation { background: #FEF3C7; color: #92400E; }
+.badge-normal { background: var(--gray-100); color: var(--gray-700); }
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.text-display {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 12px 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.progress-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar .fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+@media (min-width: 768px) {
+  .page { max-width: 600px; margin: 0 auto; }
+  .modal { border-radius: 16px; max-height: 80vh; }
+  .modal-overlay { align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 Study To-Do List</h1>
+  <div class="points-badge">⭐ <span id="headerPoints">0</span> points</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Tasks Page -->
+<div id="page-tasks" class="page active">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h2 style="font-size:18px;">Today's Tasks</h2>
+    <button class="btn btn-primary btn-sm" onclick="showAddTask()">+ Add Task</button>
+  </div>
+  <div id="taskList"></div>
+</div>
+
+<!-- Reading Page -->
+<div id="page-reading" class="page">
+  <h2 style="font-size:18px;margin-bottom:12px;">🎤 Reading Practice</h2>
+  <div id="readingTaskList"></div>
+</div>
+
+<!-- Dictation Page -->
+<div id="page-dictation" class="page">
+  <h2 style="font-size:18px;margin-bottom:12px;">🔤 English Dictation</h2>
+  <div id="dictationTaskList"></div>
+</div>
+
+<!-- Points Page -->
+<div id="page-points" class="page">
+  <h2 style="font-size:18px;margin-bottom:12px;">🏆 Points Center</h2>
+  <div class="points-total">
+    <div class="label">Total Points</div>
+    <div class="num" id="totalPoints">0</div>
+  </div>
+  <h3 style="font-size:16px;margin-bottom:8px;">History</h3>
+  <div id="pointsHistory" class="card"></div>
+</div>
+
+<!-- Add/Edit Task Modal -->
+<div id="modal-task" class="modal-overlay">
+  <div class="modal">
+    <h2 id="modalTaskTitle">Add Task</h2>
+    <input type="hidden" id="editTaskId">
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="taskTitle" placeholder="e.g. Read Unit 3 text">
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="taskType" onchange="onTaskTypeChange()">
+        <option value="normal">Normal (Photo Submit)</option>
+        <option value="reading">Reading Aloud</option>
+        <option value="dictation">English Dictation</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Subject</label>
+      <select id="taskSubject">
+        <option value="">--</option>
+        <option value="Chinese">Chinese</option>
+        <option value="English">English</option>
+        <option value="Math">Math</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Points</label>
+      <input type="number" id="taskPoints" value="10" min="1">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="taskDesc" placeholder="Optional description..."></textarea>
+    </div>
+    <div id="readingFields" style="display:none;">
+      <div class="form-group">
+        <label>Reading Text</label>
+        <textarea id="taskTextContent" placeholder="Paste the text to read aloud..." style="min-height:120px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Target Read Count</label>
+        <input type="number" id="taskTargetCount" value="3" min="1">
+      </div>
+    </div>
+    <div id="dictationFields" style="display:none;">
+      <div class="form-group">
+        <label>Word List (one per line, format: English word)</label>
+        <textarea id="taskWordList" placeholder="apple&#10;banana&#10;cat&#10;dog" style="min-height:120px;"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary btn-block" onclick="saveTask()">Save</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('modal-task')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reading Modal -->
+<div id="modal-reading" class="modal-overlay">
+  <div class="modal">
+    <h2>🎤 Reading Practice</h2>
+    <div id="readingTaskInfo"></div>
+    <div class="text-display" id="readingTextDisplay"></div>
+    <div class="recording-area">
+      <button class="record-btn" id="recordBtn" onclick="toggleRecording()">🎤</button>
+      <div class="record-status" id="recordStatus">Tap to start recording</div>
+    </div>
+    <div id="readingResult"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-outline btn-block" onclick="closeReadingModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dictation Modal -->
+<div id="modal-dictation" class="modal-overlay">
+  <div class="modal">
+    <h2>🔤 English Dictation</h2>
+    <div id="dictationTaskInfo"></div>
+    <div id="dictationArea"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary btn-block" onclick="submitDictation()">Submit</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('modal-dictation')">Cancel</button>
+    </div>
+    <div id="dictationResult"></div>
+  </div>
+</div>
+
+<!-- Photo Submit Modal -->
+<div id="modal-photo" class="modal-overlay">
+  <div class="modal">
+    <h2>📸 Submit Photo</h2>
+    <div class="form-group">
+      <label>Take a photo or select from album</label>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="previewPhoto()">
+      <img id="photoPreview" class="photo-preview" style="display:none;">
+    </div>
+    <div class="form-group">
+      <label>Note (optional)</label>
+      <input type="text" id="photoNote" placeholder="e.g. Finished all exercises">
+    </div>
+    <input type="hidden" id="photoTaskId">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-success btn-block" onclick="submitPhoto()">Submit</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('modal-photo')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <div class="tab-item active" onclick="switchTab('tasks')">
+    <span class="tab-icon">📋</span>
+    <span>Tasks</span>
+  </div>
+  <div class="tab-item" onclick="switchTab('reading')">
+    <span class="tab-icon">🎤</span>
+    <span>Reading</span>
+  </div>
+  <div class="tab-item" onclick="switchTab('dictation')">
+    <span class="tab-icon">🔤</span>
+    <span>Dictation</span>
+  </div>
+  <div class="tab-item" onclick="switchTab('points')">
+    <span class="tab-icon">🏆</span>
+    <span>Points</span>
+  </div>
+</div>
+
+<audio id="audioPlayer" style="display:none;"></audio>
+
+<script>
+const API = '/api/todo';
+let mediaRecorder = null;
+let audioChunks = [];
+let currentReadingTask = null;
+let currentReadCount = 1;
+let currentDictationTask = null;
+let dictationAudioList = [];
+
+// ─── Tab Navigation ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-item')[['tasks','reading','dictation','points'].indexOf(tab)].classList.add('active');
+  if (tab === 'tasks') loadTasks();
+  if (tab === 'reading') loadReadingTasks();
+  if (tab === 'dictation') loadDictationTasks();
+  if (tab === 'points') loadPoints();
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Modal ───────────────────────────────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ─── Tasks ───────────────────────────────────────────────────────────────────
+async function loadTasks() {
+  const res = await fetch(API + '/tasks');
+  const data = await res.json();
+  const list = document.getElementById('taskList');
+  if (!data.data || data.data.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📝</div><p>No tasks yet. Tap "+ Add Task" to create one!</p></div>';
+    return;
+  }
+  list.innerHTML = data.data.map(t => {
+    const typeBadge = t.task_type === 'reading' ? '<span class="badge badge-reading">Reading</span>' :
+                      t.task_type === 'dictation' ? '<span class="badge badge-dictation">Dictation</span>' : '';
+    const subjectBadge = t.subject ? `<span class="badge badge-normal">${t.subject}</span>` : '';
+    return `
+    <div class="card task-card">
+      <div class="task-info">
+        <div class="task-title">${esc(t.title)}</div>
+        <div class="task-meta">
+          ${typeBadge}${subjectBadge}
+          <span class="task-points">+${t.points || 10} pts</span>
+        </div>
+        ${t.description ? `<div style="font-size:13px;color:var(--gray-500);margin-top:4px;">${esc(t.description)}</div>` : ''}
+        <div class="task-actions">
+          ${t.task_type === 'normal' ? `<button class="btn btn-success btn-sm" onclick="showPhotoSubmit(${t.id})">📸 Submit</button>` : ''}
+          ${t.task_type === 'reading' ? `<button class="btn btn-primary btn-sm" onclick="showReading(${t.id}, ${JSON.stringify(t).replace(/"/g, '&quot;')})">🎤 Start</button>` : ''}
+          ${t.task_type === 'dictation' ? `<button class="btn btn-primary btn-sm" onclick="showDictation(${t.id}, ${JSON.stringify(t).replace(/"/g, '&quot;')})">🔤 Start</button>` : ''}
+          <button class="btn btn-outline btn-sm" onclick="editTask(${t.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showAddTask() {
+  document.getElementById('modalTaskTitle').textContent = 'Add Task';
+  document.getElementById('editTaskId').value = '';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskType').value = 'normal';
+  document.getElementById('taskSubject').value = '';
+  document.getElementById('taskPoints').value = '10';
+  document.getElementById('taskDesc').value = '';
+  document.getElementById('taskTextContent').value = '';
+  document.getElementById('taskTargetCount').value = '3';
+  document.getElementById('taskWordList').value = '';
+  onTaskTypeChange();
+  document.getElementById('modal-task').classList.add('show');
+}
+
+async function editTask(id) {
+  const res = await fetch(API + '/tasks');
+  const data = await res.json();
+  const task = data.data.find(t => t.id === id);
+  if (!task) return;
+  document.getElementById('modalTaskTitle').textContent = 'Edit Task';
+  document.getElementById('editTaskId').value = id;
+  document.getElementById('taskTitle').value = task.title;
+  document.getElementById('taskType').value = task.task_type;
+  document.getElementById('taskSubject').value = task.subject || '';
+  document.getElementById('taskPoints').value = task.points || 10;
+  document.getElementById('taskDesc').value = task.description || '';
+  const extra = task.extra_data || {};
+  document.getElementById('taskTextContent').value = extra.text_content || '';
+  document.getElementById('taskTargetCount').value = extra.target_count || 3;
+  const wl = extra.word_list || [];
+  document.getElementById('taskWordList').value = wl.map(w => typeof w === 'object' ? w.en : w).join('\n');
+  onTaskTypeChange();
+  document.getElementById('modal-task').classList.add('show');
+}
+
+function onTaskTypeChange() {
+  const type = document.getElementById('taskType').value;
+  document.getElementById('readingFields').style.display = type === 'reading' ? 'block' : 'none';
+  document.getElementById('dictationFields').style.display = type === 'dictation' ? 'block' : 'none';
+}
+
+async function saveTask() {
+  const id = document.getElementById('editTaskId').value;
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) { showToast('Please enter a title'); return; }
+  const type = document.getElementById('taskType').value;
+  const subject = document.getElementById('taskSubject').value;
+  const points = parseInt(document.getElementById('taskPoints').value) || 10;
+  const desc = document.getElementById('taskDesc').value.trim();
+  const textContent = document.getElementById('taskTextContent').value.trim();
+  const targetCount = document.getElementById('taskTargetCount').value;
+  const wordListRaw = document.getElementById('taskWordList').value.trim();
+  const wordList = wordListRaw ? JSON.stringify(wordListRaw.split('\n').filter(w=>w.trim()).map(w => ({en: w.trim()}))) : null;
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('task_type', type);
+  fd.append('subject', subject);
+  fd.append('points', points);
+  if (desc) fd.append('description', desc);
+  if (textContent) fd.append('text_content', textContent);
+  if (wordList) fd.append('word_list', wordList);
+
+  const url = id ? `${API}/tasks/${id}` : `${API}/tasks`;
+  const method = id ? 'PUT' : 'POST';
+  await fetch(url, { method, body: fd });
+  closeModal('modal-task');
+  showToast(id ? 'Task updated!' : 'Task created!');
+  loadTasks();
+  loadPoints();
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+  showToast('Task deleted');
+  loadTasks();
+}
+
+// ─── Photo Submit ────────────────────────────────────────────────────────────
+function showPhotoSubmit(taskId) {
+  document.getElementById('photoTaskId').value = taskId;
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoNote').value = '';
+  document.getElementById('modal-photo').classList.add('show');
+}
+
+function previewPhoto() {
+  const file = document.getElementById('photoInput').files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('photoPreview').src = e.target.result;
+      document.getElementById('photoPreview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+async function submitPhoto() {
+  const taskId = document.getElementById('photoTaskId').value;
+  const file = document.getElementById('photoInput').files[0];
+  const note = document.getElementById('photoNote').value.trim();
+  const fd = new FormData();
+  if (file) fd.append('photo', file);
+  if (note) fd.append('note', note);
+  const res = await fetch(`${API}/tasks/${taskId}/complete`, { method: 'POST', body: fd });
+  const data = await res.json();
+  closeModal('modal-photo');
+  if (data.code === 0) {
+    showToast(`+${data.points_earned} points! 🎉`);
+  } else {
+    showToast('Submit failed');
+  }
+  loadTasks();
+  loadPoints();
+}
+
+// ─── Reading ─────────────────────────────────────────────────────────────────
+async function loadReadingTasks() {
+  const res = await fetch(API + '/tasks');
+  const data = await res.json();
+  const readingTasks = (data.data || []).filter(t => t.task_type === 'reading');
+  const list = document.getElementById('readingTaskList');
+  if (readingTasks.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🎤</div><p>No reading tasks. Add one in the Tasks tab!</p></div>';
+    return;
+  }
+  list.innerHTML = readingTasks.map(t => {
+    const extra = t.extra_data || {};
+    return `
+    <div class="card">
+      <div style="font-weight:600;font-size:16px;">${esc(t.title)}</div>
+      <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">${extra.text_content ? esc(extra.text_content.substring(0, 60)) + '...' : 'No text'}</div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-primary btn-sm" onclick='showReading(${t.id}, ${JSON.stringify(t).replace(/'/g, "\\'")})'>🎤 Start Reading</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showReading(taskId, task) {
+  currentReadingTask = task;
+  currentReadCount = 1;
+  const extra = task.extra_data || {};
+  document.getElementById('readingTaskInfo').innerHTML = `<p style="font-weight:600;">${esc(task.title)}</p><p style="font-size:13px;color:var(--gray-500);">Target: ${extra.target_count || 3} times</p>`;
+  document.getElementById('readingTextDisplay').textContent = extra.text_content || 'No reading text provided.';
+  document.getElementById('readingResult').innerHTML = '';
+  document.getElementById('recordStatus').textContent = 'Tap to start recording';
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('modal-reading').classList.add('show');
+}
+
+function closeReadingModal() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  closeModal('modal-reading');
+}
+
+async function toggleRecording() {
+  const btn = document.getElementById('recordBtn');
+  const status = document.getElementById('recordStatus');
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    btn.classList.remove('recording');
+    status.textContent = 'Processing...';
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      status.textContent = 'Submitting for verification...';
+      await submitReading(blob);
+    };
+    mediaRecorder.start();
+    btn.classList.add('recording');
+    status.textContent = 'Recording... Tap to stop';
+  } catch (e) {
+    showToast('Microphone access denied');
+    console.error(e);
+  }
+}
+
+async function submitReading(audioBlob) {
+  const fd = new FormData();
+  fd.append('task_id', currentReadingTask.id);
+  fd.append('audio', audioBlob, 'recording.webm');
+  fd.append('read_count', currentReadCount);
+  fd.append('target_count', currentReadingTask.extra_data?.target_count || 3);
+  try {
+    const res = await fetch(API + '/reading/submit', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.code === 0) {
+      const r = data.data;
+      const cls = r.is_completed ? 'success' : 'fail';
+      document.getElementById('readingResult').innerHTML = `
+        <div class="result-card ${cls}">
+          <p><strong>Recognized Text:</strong> ${esc(r.recognized_text || '(empty)')}</p>
+          <p><strong>Completeness:</strong> ${r.completeness}%</p>
+          <p><strong>Read Count:</strong> ${r.read_count} / ${r.target_count}</p>
+          ${r.is_completed ? `<p style="color:var(--success);font-weight:700;">✅ Passed! +${r.points_earned} points</p>` : '<p style="color:var(--danger);">Keep trying!</p>'}
+        </div>`;
+      if (r.is_completed) {
+        currentReadCount = 1;
+        showToast(`+${r.points_earned} points! 🎉`);
+        loadPoints();
+      } else {
+        currentReadCount++;
+      }
+    } else {
+      document.getElementById('readingResult').innerHTML = `<div class="result-card fail"><p>Error: ${JSON.stringify(data)}</p></div>`;
+    }
+  } catch (e) {
+    document.getElementById('readingResult').innerHTML = `<div class="result-card fail"><p>Error: ${e.message}</p></div>`;
+  }
+  document.getElementById('recordStatus').textContent = 'Tap to record again';
+  document.getElementById('recordBtn').classList.remove('recording');
+}
+
+// ─── Dictation ───────────────────────────────────────────────────────────────
+async function loadDictationTasks() {
+  const res = await fetch(API + '/tasks');
+  const data = await res.json();
+  const dictTasks = (data.data || []).filter(t => t.task_type === 'dictation');
+  const list = document.getElementById('dictationTaskList');
+  if (dictTasks.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🔤</div><p>No dictation tasks. Add one in the Tasks tab!</p></div>';
+    return;
+  }
+  list.innerHTML = dictTasks.map(t => {
+    const extra = t.extra_data || {};
+    const wc = (extra.word_list || []).length;
+    return `
+    <div class="card">
+      <div style="font-weight:600;font-size:16px;">${esc(t.title)}</div>
+      <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">${wc} words</div>
+      <div style="margin-top:8px;">
+        <button class="btn btn-primary btn-sm" onclick='showDictation(${t.id}, ${JSON.stringify(t).replace(/'/g, "\\'")})'>🔤 Start Dictation</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function showDictation(taskId, task) {
+  currentDictationTask = task;
+  document.getElementById('dictationTaskInfo').innerHTML = `<p style="font-weight:600;">${esc(task.title)}</p>`;
+  document.getElementById('dictationResult').innerHTML = '';
+  document.getElementById('dictationArea').innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px;">Loading audio...</p>';
+  document.getElementById('modal-dictation').classList.add('show');
+
+  try {
+    const fd = new FormData();
+    fd.append('task_id', taskId);
+    const res = await fetch(API + '/dictation/generate-audio', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.code === 0) {
+      dictationAudioList = data.data.audio_list;
+      const wordList = data.data.word_list;
+      let html = '';
+      dictationAudioList.forEach((item, i) => {
+        html += `
+        <div class="dictation-word">
+          <span class="word-num">${i + 1}</span>
+          <button class="word-play" onclick="playAudio('${item.audio_url}')">▶</button>
+          <input type="text" id="dict-input-${i}" placeholder="Type the word..." autocomplete="off" autocapitalize="off">
+        </div>`;
+      });
+      document.getElementById('dictationArea').innerHTML = html;
+    } else {
+      document.getElementById('dictationArea').innerHTML = '<p style="color:var(--danger);">Failed to load audio</p>';
+    }
+  } catch (e) {
+    document.getElementById('dictationArea').innerHTML = `<p style="color:var(--danger);">Error: ${e.message}</p>`;
+  }
+}
+
+function playAudio(url) {
+  const player = document.getElementById('audioPlayer');
+  player.src = url;
+  player.play();
+}
+
+async function submitDictation() {
+  if (!currentDictationTask) return;
+  const answers = [];
+  dictationAudioList.forEach((_, i) => {
+    const input = document.getElementById(`dict-input-${i}`);
+    answers.push({ answer: input ? input.value.trim() : '' });
+  });
+  const fd = new FormData();
+  fd.append('task_id', currentDictationTask.id);
+  fd.append('answers', JSON.stringify(answers));
+  try {
+    const res = await fetch(API + '/dictation/submit', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.code === 0) {
+      const r = data.data;
+      let html = `<div class="result-card ${r.is_passed ? 'success' : 'fail'}">
+        <p><strong>Score:</strong> ${r.correct}/${r.total} (${(r.accuracy * 100).toFixed(1)}%)</p>
+        ${r.is_passed ? `<p style="color:var(--success);font-weight:700;">✅ Passed! +${r.points_earned} points</p>` : '<p style="color:var(--danger);">Need 80% to pass. Try again!</p>'}
+        <div style="margin-top:8px;">`;
+      r.results.forEach(item => {
+        html += `<div class="dictation-result-item">
+          <span class="${item.correct ? 'correct' : 'wrong'}">${item.correct ? '✅' : '❌'}</span>
+          <span>Expected: <strong>${esc(item.expected)}</strong></span>
+          ${!item.correct ? `<span>Your answer: <em>${esc(item.user_answer) || '(empty)'}</em></span>` : ''}
+        </div>`;
+      });
+      html += '</div></div>';
+      document.getElementById('dictationResult').innerHTML = html;
+      if (r.is_passed) {
+        showToast(`+${r.points_earned} points! 🎉`);
+        loadPoints();
+      }
+    }
+  } catch (e) {
+    showToast('Submit failed: ' + e.message);
+  }
+}
+
+// ─── Points ──────────────────────────────────────────────────────────────────
+async function loadPoints() {
+  const res = await fetch(API + '/points/summary');
+  const data = await res.json();
+  if (data.code === 0) {
+    document.getElementById('totalPoints').textContent = data.data.total_points;
+    document.getElementById('headerPoints').textContent = data.data.total_points;
+    const history = data.data.history || [];
+    if (history.length === 0) {
+      document.getElementById('pointsHistory').innerHTML = '<div class="empty-state"><div class="emoji">⭐</div><p>No points yet. Complete tasks to earn points!</p></div>';
+    } else {
+      document.getElementById('pointsHistory').innerHTML = history.map(h => `
+        <div class="history-item">
+          <div class="hi-left">
+            <div class="hi-desc">${esc(h.description || h.reason || '')}</div>
+            <div class="hi-time">${formatTime(h.created_at)}</div>
+          </div>
+          <div class="hi-points">+${h.points}</div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+// ─── Utils ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+loadTasks();
+loadPoints();
+</script>
+</body>
+</html>
