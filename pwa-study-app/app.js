@@ -1076,20 +1076,21 @@ function completeTaskById(taskId, reason) {
 
 // ===== 日期导航 =====
 function initDateNav() {
-  const btnPrev = document.getElementById('btnPrevDay');
-  const btnNext = document.getElementById('btnNextDay');
-  if (btnPrev) btnPrev.addEventListener('click', () => changeDate(-1));
-  if (btnNext) btnNext.addEventListener('click', () => changeDate(1));
-}
-
-function changeDate(offset) {
-  const d = new Date(selectedDate + 'T00:00:00');
-  d.setDate(d.getDate() + offset);
-  selectedDate = d.toISOString().split('T')[0];
-  renderTasks();
+  const picker = document.getElementById('datePicker');
+  if (picker) {
+    picker.value = selectedDate;
+    picker.addEventListener('change', () => {
+      selectedDate = picker.value;
+      renderTasks();
+    });
+  }
 }
 
 function updateDateLabel() {
+  // Sync date picker
+  const picker = document.getElementById('datePicker');
+  if (picker) picker.value = selectedDate;
+
   const label = document.getElementById('dateNavLabel');
   if (!label) return;
   const today = getTodayStr();

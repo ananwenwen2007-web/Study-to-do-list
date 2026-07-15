@@ -915,48 +915,32 @@ html, body {
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-}
-
-.date-nav-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: #f1f5f9;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.date-nav-btn:active {
-  background: #e2e8f0;
-  transform: scale(0.9);
-}
-
-.date-nav-center {
-  display: flex;
-  align-items: center;
   gap: 12px;
-  flex: 1;
-  justify-content: center;
 }
 
-.date-nav-label {
-  font-size: 16px;
-  font-weight: 700;
+.date-picker {
+  flex: 1;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text);
-  min-width: 140px;
-  text-align: center;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.date-picker:focus {
+  border-color: var(--primary);
 }
 
 .date-nav .btn-add {
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  flex-shrink: 0;
 }
 
 /* ===== Weekly Stats ===== */
