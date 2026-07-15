@@ -205,6 +205,19 @@ let currentWordIndex = 0;
 let dictationCorrect = 0;
 let dictationTotal = 0;
 let currentPhotoTaskId = null;
+let pendingAction = null; // 待执行的受保护操作
+
+// ===== 密码系统 =====
+const DEFAULT_PASSWORD = '123456';
+function getPassword() {
+  return Store.get('parentPassword', DEFAULT_PASSWORD);
+}
+function setPassword(pwd) {
+  Store.set('parentPassword', pwd);
+}
+function verifyPassword(input) {
+  return input === getPassword();
+}
 
 // ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -216,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReadingSelect();
   initDictationSelect();
   initPhotoUpload();
+  initSettings();
 
   // Register service worker
   if ('serviceWorker' in navigator) {
@@ -250,7 +264,9 @@ function switchTab(tabId) {
 function initAddTaskButton() {
   const btn = document.getElementById('btnAddTask');
   if (btn) {
-    btn.addEventListener('click', openAddTaskModal);
+    btn.addEventListener('click', () => {
+      requestPassword(() => openAddTaskModal());
+    });
   }
 }
 
@@ -402,15 +418,17 @@ function openTaskAction(taskId) {
 }
 
 function deleteTask(taskId) {
-  if (!confirm('确定删除这个任务吗？')) return;
+  requestPassword(() => {
+    if (!confirm('确定删除这个任务吗？')) return;
 
   let tasks = Store.getTasks();
   tasks = tasks.filter(t => t.id !== taskId);
   Store.saveTasks(tasks);
   removePoints(taskId);
-  renderTasks();
-  updatePointsBadge();
-  showToast('任务已删除');
+    renderTasks();
+    updatePointsBadge();
+    showToast('任务已删除');
+  });
 }
 
 // ===== 添加任务 =====
@@ -1029,6 +1047,126 @@ function completeTaskById(taskId, reason) {
   Store.saveTasks(tasks);
   renderTasks();
   updatePointsBadge();
+}
+
+// ===== 密码验证弹窗 =====
+function requestPassword(callback) {
+  pendingAction = callback;
+  const modal = document.getElementById('passwordModal');
+  if (modal) modal.classList.add('show');
+  const input = document.getElementById('passwordInput');
+  if (input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 100);
+  }
+  const errorEl = document.getElementById('passwordError');
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+function closePasswordModal() {
+  const modal = document.getElementById('passwordModal');
+  if (modal) modal.classList.remove('show');
+  pendingAction = null;
+}
+
+function confirmPassword() {
+  const input = document.getElementById('passwordInput');
+  const errorEl = document.getElementById('passwordError');
+  if (!input) return;
+
+  if (verifyPassword(input.value)) {
+    closePasswordModal();
+    if (pendingAction) {
+      pendingAction();
+      pendingAction = null;
+    }
+  } else {
+    if (errorEl) {
+      errorEl.style.display = 'block';
+      input.value = '';
+      input.focus();
+    }
+  }
+}
+
+// ===== 修改密码 =====
+function openChangePasswordModal() {
+  const modal = document.getElementById('changePasswordModal');
+  if (modal) modal.classList.add('show');
+  document.getElementById('currentPasswordInput').value = '';
+  document.getElementById('newPasswordInput').value = '';
+  document.getElementById('confirmPasswordInput').value = '';
+  const errorEl = document.getElementById('changePasswordError');
+  if (errorEl) {
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+  }
+}
+
+function closeChangePasswordModal() {
+  const modal = document.getElementById('changePasswordModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function saveNewPassword() {
+  const current = document.getElementById('currentPasswordInput').value;
+  const newPwd = document.getElementById('newPasswordInput').value;
+  const confirm = document.getElementById('confirmPasswordInput').value;
+  const errorEl = document.getElementById('changePasswordError');
+
+  if (!verifyPassword(current)) {
+    if (errorEl) { errorEl.textContent = '当前密码错误'; errorEl.style.display = 'block'; }
+    return;
+  }
+  if (newPwd.length < 4) {
+    if (errorEl) { errorEl.textContent = '新密码至少4位'; errorEl.style.display = 'block'; }
+    return;
+  }
+  if (newPwd !== confirm) {
+    if (errorEl) { errorEl.textContent = '两次输入的新密码不一致'; errorEl.style.display = 'block'; }
+    return;
+  }
+
+  setPassword(newPwd);
+  closeChangePasswordModal();
+  showToast('✅ 密码已修改');
+}
+
+// ===== 设置页面 =====
+function initSettings() {
+  const btnChange = document.getElementById('btnChangePassword');
+  if (btnChange) {
+    btnChange.addEventListener('click', () => {
+      requestPassword(() => openChangePasswordModal());
+    });
+  }
+
+  // 密码弹窗按钮
+  const closePwdModal = document.getElementById('closePasswordModal');
+  if (closePwdModal) closePwdModal.addEventListener('click', closePasswordModal);
+
+  const btnCancelPwd = document.getElementById('btnCancelPassword');
+  if (btnCancelPwd) btnCancelPwd.addEventListener('click', closePasswordModal);
+
+  const btnConfirmPwd = document.getElementById('btnConfirmPassword');
+  if (btnConfirmPwd) btnConfirmPwd.addEventListener('click', confirmPassword);
+
+  const pwdInput = document.getElementById('passwordInput');
+  if (pwdInput) {
+    pwdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmPassword();
+    });
+  }
+
+  // 修改密码弹窗按钮
+  const closeChangePwd = document.getElementById('closeChangePasswordModal');
+  if (closeChangePwd) closeChangePwd.addEventListener('click', closeChangePasswordModal);
+
+  const btnCancelChange = document.getElementById('btnCancelChangePassword');
+  if (btnCancelChange) btnCancelChange.addEventListener('click', closeChangePasswordModal);
+
+  const btnSaveNew = document.getElementById('btnSaveNewPassword');
+  if (btnSaveNew) btnSaveNew.addEventListener('click', saveNewPassword);
 }
 
 // ===== 积分系统 =====
