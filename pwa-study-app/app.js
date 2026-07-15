@@ -208,7 +208,7 @@ let currentPhotoTaskId = null;
 let pendingAction = null; // 待执行的受保护操作
 
 // ===== 密码系统 =====
-const DEFAULT_PASSWORD = '123456';
+const DEFAULT_PASSWORD = '20260715';
 function getPassword() {
   return Store.get('parentPassword', DEFAULT_PASSWORD);
 }
