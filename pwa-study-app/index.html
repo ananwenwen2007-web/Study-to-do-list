@@ -28,9 +28,13 @@
   <main class="app-main">
     <!-- Tab: Tasks -->
     <section class="tab-content active" id="tabTasks">
-      <div class="section-header">
-        <h2>📋 今日任务</h2>
-        <button class="btn-add" id="btnAddTask" title="添加任务">＋</button>
+      <div class="date-nav">
+        <button class="date-nav-btn" id="btnPrevDay">◀</button>
+        <div class="date-nav-center">
+          <span class="date-nav-label" id="dateNavLabel">今天</span>
+          <button class="btn-add" id="btnAddTask" title="添加任务">＋</button>
+        </div>
+        <button class="date-nav-btn" id="btnNextDay">▶</button>
       </div>
       <div class="task-list" id="taskList">
         <div class="empty-state" id="emptyTasks">
@@ -120,8 +124,18 @@
           </div>
         </div>
       </div>
+      <div class="weekly-stats">
+        <div class="weekly-stats-header">
+          <span> 本周任务完成</span>
+          <span class="weekly-stats-value" id="weeklyStatsText">0/0</span>
+        </div>
+        <div class="weekly-progress-bar">
+          <div class="weekly-progress-fill" id="weeklyProgressFill" style="width:0%"></div>
+        </div>
+        <div class="weekly-stats-detail" id="weeklyStatsDetail"></div>
+      </div>
       <div class="points-history">
-        <h3>📋 积分记录</h3>
+        <h3> 积分记录</h3>
         <div class="history-list" id="pointsHistory">
           <div class="empty-state">
             <p>还没有积分记录</p>

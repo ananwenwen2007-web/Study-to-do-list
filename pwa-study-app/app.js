@@ -205,6 +205,7 @@ let currentWordIndex = 0;
 let dictationCorrect = 0;
 let dictationTotal = 0;
 let currentPhotoTaskId = null;
+let selectedDate = getTodayStr(); // 当前选中的日期
 let pendingAction = null; // 待执行的受保护操作
 
 // ===== 密码系统 =====
@@ -226,9 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initModalButtons();
   renderTasks();
   renderPoints();
+  renderWeeklyStats();
   initReadingSelect();
   initDictationSelect();
   initPhotoUpload();
+  initDateNav();
   initSettings();
 
   // Register service worker
@@ -257,7 +260,7 @@ function switchTab(tabId) {
   const navEl = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
   if (navEl) navEl.classList.add('active');
 
-  if (tabId === 'tabPoints') renderPoints();
+  if (tabId === 'tabPoints') { renderPoints(); renderWeeklyStats(); }
 }
 
 // ===== 添加任务按钮 =====
@@ -332,23 +335,27 @@ function initModalButtons() {
 // ===== 任务管理 =====
 function renderTasks() {
   const tasks = Store.getTasks();
-  const today = getTodayStr();
-  const todayTasks = tasks.filter(t => t.date === today);
+  const dayTasks = tasks.filter(t => t.date === selectedDate);
+  const isToday = selectedDate === getTodayStr();
+
+  // Update date label
+  updateDateLabel();
+
+  // Show/hide add button (only today)
+  const addBtn = document.getElementById('btnAddTask');
+  if (addBtn) addBtn.style.display = isToday ? 'flex' : 'none';
 
   const container = document.getElementById('taskList');
   if (!container) return;
 
-  if (todayTasks.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon"></div>
-        <p>今天还没有任务哦</p>
-        <p class="empty-hint">点击 ＋ 添加任务开始学习吧</p>
-      </div>`;
+  if (dayTasks.length === 0) {
+    const msg = isToday ? '今天还没有任务哦' : '这天没有任务';
+    const hint = isToday ? '点击 ＋ 添加任务开始学习吧' : '点击 ▶ 切换日期查看';
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon"></div><p>' + msg + '</p><p class="empty-hint">' + hint + '</p></div>';
     return;
   }
 
-  container.innerHTML = todayTasks.map(task => `
+  container.innerHTML = dayTasks.map(task => `
     <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
       <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask('${task.id}')">
         ${task.completed ? '✓' : ''}
@@ -1047,6 +1054,82 @@ function completeTaskById(taskId, reason) {
   Store.saveTasks(tasks);
   renderTasks();
   updatePointsBadge();
+}
+
+// ===== 日期导航 =====
+function initDateNav() {
+  const btnPrev = document.getElementById('btnPrevDay');
+  const btnNext = document.getElementById('btnNextDay');
+  if (btnPrev) btnPrev.addEventListener('click', () => changeDate(-1));
+  if (btnNext) btnNext.addEventListener('click', () => changeDate(1));
+}
+
+function changeDate(offset) {
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() + offset);
+  selectedDate = d.toISOString().split('T')[0];
+  renderTasks();
+}
+
+function updateDateLabel() {
+  const label = document.getElementById('dateNavLabel');
+  if (!label) return;
+  const today = getTodayStr();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  if (selectedDate === today) label.textContent = '今天';
+  else if (selectedDate === yesterdayStr) label.textContent = '昨天';
+  else if (selectedDate === tomorrowStr) label.textContent = '明天';
+  else {
+    const d = new Date(selectedDate + 'T00:00:00');
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    label.textContent = (d.getMonth()+1) + '月' + d.getDate() + '日 ' + weekdays[d.getDay()];
+  }
+}
+
+// ===== 本周统计 =====
+function getWeekRange() {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sunday
+  const monday = new Date(now);
+  // Convert to Monday-based week (Monday=0)
+  const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  monday.setDate(now.getDate() - offset);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return {
+    start: monday.toISOString().split('T')[0],
+    end: sunday.toISOString().split('T')[0]
+  };
+}
+
+function renderWeeklyStats() {
+  const tasks = Store.getTasks();
+  const week = getWeekRange();
+  const weekTasks = tasks.filter(t => t.date >= week.start && t.date <= week.end);
+  const total = weekTasks.length;
+  const completed = weekTasks.filter(t => t.completed).length;
+  const rate = total > 0 ? Math.round(completed / total * 100) : 0;
+
+  const textEl = document.getElementById('weeklyStatsText');
+  if (textEl) textEl.textContent = completed + '/' + total;
+
+  const fillEl = document.getElementById('weeklyProgressFill');
+  if (fillEl) fillEl.style.width = rate + '%';
+
+  const detailEl = document.getElementById('weeklyStatsDetail');
+  if (detailEl) {
+    if (total === 0) {
+      detailEl.textContent = '本周还没有任务';
+    } else {
+      detailEl.textContent = '完成率 ' + rate + '%，' + (total - completed) + ' 个待完成';
+    }
+  }
 }
 
 // ===== 密码验证弹窗 =====
