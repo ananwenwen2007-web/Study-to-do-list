@@ -24,49 +24,23 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  if (dateStr === today.toISOString().split('T')[0]) return '今天';
-  if (dateStr === tomorrow.toISOString().split('T')[0]) return '明天';
-  return `${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
-}
-
 function getTodayStr() {
   return new Date().toISOString().split('T')[0];
 }
 
-function parseRelativeDate(dateStr) {
-  if (!dateStr) return getTodayStr();
-  const today = new Date();
-  const lower = dateStr.toLowerCase().trim();
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
-  if (lower === '今天' || lower === 'today') return today.toISOString().split('T')[0];
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (lower === '明天' || lower === 'tomorrow') return tomorrow.toISOString().split('T')[0];
-
-  const dayAfter = new Date(today);
-  dayAfter.setDate(dayAfter.getDate() + 2);
-  if (lower === '后天') return dayAfter.toISOString().split('T')[0];
-
-  // Try parsing as date
-  const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
-
-  return getTodayStr();
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
 // ===== 教材数据 =====
@@ -78,14 +52,14 @@ const TEXTBOOK_DATA = {
           words: [
             { word: 'master', phonetic: '/ˈmɑːstə(r)/', meaning: '主人；大师' },
             { word: 'grade', phonetic: '/ɡreɪd/', meaning: '年级' },
-            { word: 'student', phonetic: '/ˈstjuːdnt/', meaning: '学生' },
+            { word: 'student', phonetic: '/stjuːdnt/', meaning: '学生' },
             { word: 'reading', phonetic: '/ˈriːdɪ/', meaning: '阅读' },
             { word: 'classmate', phonetic: '/ˈklɑːsmeɪt/', meaning: '同班同学' },
             { word: 'after', phonetic: '/ˈɑːftə(r)/', meaning: '在……之后' },
             { word: 'slim', phonetic: '/slɪm/', meaning: '苗条的' },
             { word: 'over', phonetic: '/ˈəʊvə(r)/', meaning: '超过；在……上方' },
-            { word: 'walking', phonetic: '/ˈwɔːkɪ/', meaning: '步行' },
-            { word: 'really', phonetic: '/ˈriːəli/', meaning: '的确；确实' },
+            { word: 'walking', phonetic: '/ˈwɔkɪ/', meaning: '步行' },
+            { word: 'really', phonetic: '/riːəli/', meaning: '的确；确实' },
           ]
         },
         'Unit 2 Let\'s play sports!': {
@@ -105,14 +79,14 @@ const TEXTBOOK_DATA = {
         'Unit 3 Welcome to our school!': {
           words: [
             { word: 'which', phonetic: '/wɪtʃ/', meaning: '哪一个' },
-            { word: 'building', phonetic: '/ˈbɪldŋ/', meaning: '建筑物' },
+            { word: 'building', phonetic: '/ˈbɪldɪŋ/', meaning: '建筑物' },
             { word: 'field', phonetic: '/fiːld/', meaning: '场地' },
             { word: 'library', phonetic: '/ˈlaɪbrəri/', meaning: '图书馆' },
             { word: 'only', phonetic: '/ˈəʊnli/', meaning: '只；只有' },
             { word: 'gate', phonetic: '/ɡeɪt/', meaning: '大门' },
             { word: 'bright', phonetic: '/braɪt/', meaning: '明亮的' },
             { word: 'modern', phonetic: '/ˈmɒdn/', meaning: '现代的' },
-            { word: 'hall', phonetic: '/hɔːl/', meaning: '大厅' },
+            { word: 'hall', phonetic: '/hɔl/', meaning: '大厅' },
             { word: 'diary', phonetic: '/ˈdaɪəri/', meaning: '日记' },
           ]
         },
@@ -121,13 +95,13 @@ const TEXTBOOK_DATA = {
             { word: 'wake', phonetic: '/weɪk/', meaning: '醒；唤醒' },
             { word: 'morning', phonetic: '/ˈmɔːnɪŋ/', meaning: '早晨' },
             { word: 'hill', phonetic: '/hɪl/', meaning: '小山' },
-            { word: ' seldom', phonetic: '/ˈseldəm/', meaning: '很少' },
+            { word: 'seldom', phonetic: '/ˈseldəm/', meaning: '很少' },
             { word: 'out', phonetic: '/aʊt/', meaning: '出来' },
             { word: 'need', phonetic: '/niːd/', meaning: '需要' },
             { word: 'rest', phonetic: '/rest/', meaning: '休息' },
             { word: 'once', phonetic: '/wʌns/', meaning: '一次' },
             { word: 'activity', phonetic: '/ækˈtɪvəti/', meaning: '活动' },
-            { word: 'homework', phonetic: '/həʊmwɜk/', meaning: '家庭作业' },
+            { word: 'homework', phonetic: '/həʊmwɜːk/', meaning: '家庭作业' },
           ]
         },
       },
@@ -141,7 +115,7 @@ const TEXTBOOK_DATA = {
             { word: 'share', phonetic: '/ʃeə(r)/', meaning: '分享' },
             { word: 'bedroom', phonetic: '/bedruːm/', meaning: '卧室' },
             { word: 'own', phonetic: '/əʊn/', meaning: '自己的' },
-            { word: 'bathroom', phonetic: '/ˈbɑθruːm/', meaning: '浴室' },
+            { word: 'bathroom', phonetic: '/ˈbɑːθruːm/', meaning: '浴室' },
             { word: 'kitchen', phonetic: '/ˈkɪtʃɪn/', meaning: '厨房' },
             { word: 'garden', phonetic: '/ˈɡɑːdn/', meaning: '花园' },
           ]
@@ -153,7 +127,7 @@ const TEXTBOOK_DATA = {
             { word: 'skill', phonetic: '/skɪl/', meaning: '技能' },
             { word: 'helpful', phonetic: '/ˈhelpfl/', meaning: '有帮助的' },
             { word: 'community', phonetic: '/kəˈmjuːnəti/', meaning: '社区' },
-            { word: 'problem', phonetic: '/ˈprɒbləm/', meaning: '问题' },
+            { word: 'problem', phonetic: '/prɒbləm/', meaning: '问题' },
             { word: 'something', phonetic: '/ˈsʌmθŋ/', meaning: '某事' },
             { word: 'engineer', phonetic: '/ˌendʒɪˈnɪə(r)/', meaning: '工程师' },
             { word: 'check', phonetic: '/tʃek/', meaning: '检查' },
@@ -181,7 +155,7 @@ const TEXTBOOK_DATA = {
           reading: '我家的后面有一个很大的园，相传叫作百草园。现在是早已并屋子一起卖给朱文公的子孙了，连那最末次的相见也已经隔了七八年，其中似乎确凿只有一些野草；但那时却是我的乐园。\n\n不必说碧绿的菜畦，光滑的石井栏，高大的皂荚树，紫红的桑椹；也不必说鸣蝉在树叶里长吟，肥胖的黄蜂伏在菜花上，轻捷的叫天子（云雀）忽然从草间直窜向云霄里去了。单是周围的短短的泥墙根一带，就有无限趣味。'
         },
         '《木兰诗》': {
-          reading: '唧唧复唧唧，木兰当户织。不闻机声，唯闻女叹息。\n\n问女何所思，问女何所忆。女亦无所思，女亦无所忆。昨夜见军帖，可汗大点兵，军书十二卷，卷卷有爷名。阿爷无大儿，木兰无长兄，愿为市鞍马，从此替爷征。\n\n东市买骏马，西市买鞍鞯，南市买辔头，北市买长鞭。旦辞爷娘去，暮宿黄河边，不闻爷娘唤女声，但闻黄河流水鸣溅溅。旦辞黄河去，暮至黑山头，不闻爷娘唤女声，但闻燕山胡骑鸣啾啾。'
+          reading: '唧唧复唧唧，木兰当户织。不闻机杼声，唯闻女叹息。\n\n问女何所思，问女何所忆。女亦无所思，女亦无所忆。昨夜见军帖，可汗大点兵，军书十二卷，卷卷有爷名。阿爷无大儿，木兰无长兄，愿为市鞍马，从此替爷征。\n\n东市买骏马，西市买鞍鞯，南市买辔头，北市买长鞭。旦辞爷娘去，暮宿黄河边，不闻爷娘唤女声，但闻黄河流水鸣溅溅。旦辞黄河去，暮至黑山头，不闻爷娘唤女声，但闻燕山胡骑鸣啾啾。'
         },
       }
     }
@@ -203,7 +177,7 @@ const TEXTBOOK_DATA = {
     },
     '必背诗歌': {
       '《观沧海》曹操': {
-        reading: '东临碣石，以观沧海。\n水何澹，山岛竦峙。\n树木丛生，百草丰茂。\n秋风萧瑟，洪波涌起。\n日月之行，若出其中；\n星汉灿烂，若出其里。\n幸甚至哉，歌以咏志。'
+        reading: '东临碣石，以观沧海。\n水何澹澹，山岛竦峙。\n树木丛生，百草丰茂。\n秋风萧瑟，洪波涌起。\n日月之行，若出其中；\n星汉灿烂，若出其里。\n幸甚至哉，歌以咏志。'
       },
       '《次北固山下》王湾': {
         reading: '客路青山外，行舟绿水前。\n潮平两岸阔，风正一帆悬。\n海日生残夜，江春入旧年。\n乡书何处达？归雁洛阳边。'
@@ -222,7 +196,7 @@ const TEXTBOOK_DATA = {
 };
 
 // ===== 应用状态 =====
-let currentTab = 'tasks';
+let currentTab = 'tabTasks';
 let recording = false;
 let mediaRecorder = null;
 let audioChunks = [];
@@ -230,63 +204,113 @@ let dictationWords = [];
 let currentWordIndex = 0;
 let dictationCorrect = 0;
 let dictationTotal = 0;
+let currentPhotoTaskId = null;
 
 // ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
+  initAddTaskButton();
+  initModalButtons();
   renderTasks();
   renderPoints();
-  initTextbookSelectors();
+  initReadingSelect();
+  initDictationSelect();
   initPhotoUpload();
 
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
-
-  // PWA install prompt
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) {
-      installBtn.style.display = 'block';
-      installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          deferredPrompt = null;
-          installBtn.style.display = 'none';
-        }
-      });
-    }
-  });
-  window.addEventListener('appinstalled', () => {
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) installBtn.style.display = 'none';
-  });
 });
 
 // ===== Tab 切换 =====
 function initTabs() {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      const tab = item.dataset.tab;
-      switchTab(tab);
+      switchTab(item.dataset.tab);
     });
   });
 }
 
-function switchTab(tab) {
-  currentTab = tab;
+function switchTab(tabId) {
+  currentTab = tabId;
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+  const tabEl = document.getElementById(tabId);
+  if (tabEl) tabEl.classList.add('active');
 
-  if (tab === 'points') renderPoints();
+  const navEl = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  if (tabId === 'tabPoints') renderPoints();
+}
+
+// ===== 添加任务按钮 =====
+function initAddTaskButton() {
+  const btn = document.getElementById('btnAddTask');
+  if (btn) {
+    btn.addEventListener('click', openAddTaskModal);
+  }
+}
+
+// ===== 模态框按钮 =====
+function initModalButtons() {
+  // 添加任务模态框
+  const closeModal = document.getElementById('closeModal');
+  if (closeModal) closeModal.addEventListener('click', closeAddTaskModal);
+
+  const btnCancel = document.getElementById('btnCancelTask');
+  if (btnCancel) btnCancel.addEventListener('click', closeAddTaskModal);
+
+  const btnSave = document.getElementById('btnSaveTask');
+  if (btnSave) btnSave.addEventListener('click', saveTask);
+
+  // 任务类型切换
+  document.querySelectorAll('input[name="taskType"]').forEach(radio => {
+    radio.addEventListener('change', updateTypeFields);
+  });
+
+  // 教材选择器变化
+  const taskTextbook = document.getElementById('taskTextbook');
+  if (taskTextbook) {
+    taskTextbook.addEventListener('change', onTextbookSelectChange);
+  }
+
+  // 拍照模态框
+  const closePhotoModal = document.getElementById('closePhotoModal');
+  if (closePhotoModal) closePhotoModal.addEventListener('click', closePhotoModalFn);
+
+  const btnCancelPhoto = document.getElementById('btnCancelPhoto');
+  if (btnCancelPhoto) btnCancelPhoto.addEventListener('click', closePhotoModalFn);
+
+  const btnConfirmPhoto = document.getElementById('btnConfirmPhoto');
+  if (btnConfirmPhoto) btnConfirmPhoto.addEventListener('click', confirmPhoto);
+
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+  if (photoPlaceholder) photoPlaceholder.addEventListener('click', triggerPhotoInput);
+
+  // 听写按钮
+  const btnStart = document.getElementById('btnStartDictation');
+  if (btnStart) btnStart.addEventListener('click', startDictation);
+
+  const btnStop = document.getElementById('btnStopDictation');
+  if (btnStop) btnStop.addEventListener('click', stopDictation);
+
+  const btnSubmit = document.getElementById('btnSubmitAnswer');
+  if (btnSubmit) btnSubmit.addEventListener('click', submitAnswer);
+
+  // 单词输入框回车提交
+  const wordAnswer = document.getElementById('wordAnswer');
+  if (wordAnswer) {
+    wordAnswer.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitAnswer();
+    });
+  }
+
+  // 朗读按钮
+  const btnRecord = document.getElementById('btnRecord');
+  if (btnRecord) btnRecord.addEventListener('click', toggleRecording);
 }
 
 // ===== 任务管理 =====
@@ -296,13 +320,14 @@ function renderTasks() {
   const todayTasks = tasks.filter(t => t.date === today);
 
   const container = document.getElementById('taskList');
+  if (!container) return;
 
   if (todayTasks.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">📋</div>
+        <div class="empty-icon"></div>
         <p>今天还没有任务哦</p>
-        <p class="empty-hint">点击 + 添加任务开始学习吧</p>
+        <p class="empty-hint">点击 ＋ 添加任务开始学习吧</p>
       </div>`;
     return;
   }
@@ -317,8 +342,9 @@ function renderTasks() {
         <div class="task-meta">
           <span class="task-subject">${escapeHtml(task.subject)}</span>
           <span class="task-points">⭐ ${task.points}积分</span>
-          ${task.type === 'reading' ? '<span class="task-type-icon"></span>' : ''}
-          ${task.type === 'dictation' ? '<span class="task-type-icon">🔤</span>' : ''}
+          ${task.type === 'reading' ? '<span>🎤</span>' : ''}
+          ${task.type === 'dictation' ? '<span>🔤</span>' : ''}
+          ${task.photoUrl ? '<span>📸</span>' : ''}
         </div>
       </div>
       <div class="task-actions">
@@ -335,13 +361,12 @@ function toggleTask(taskId) {
   if (!task) return;
 
   if (task.type === 'reading' || task.type === 'dictation') {
-    // 朗读和听写任务需要通过专门流程完成
     if (task.type === 'reading') {
-      switchTab('reading');
-      loadReadingTask(task);
+      switchTab('tabReading');
+      loadReadingForTask(task);
     } else {
-      switchTab('dictation');
-      loadDictationTask(task);
+      switchTab('tabDictation');
+      loadDictationForTask(task);
     }
     return;
   }
@@ -349,14 +374,15 @@ function toggleTask(taskId) {
   task.completed = !task.completed;
   if (task.completed) {
     task.completedAt = new Date().toISOString();
-    addPoints(task.points, `完成任务: ${task.title}`, task.id);
+    addPoints(task.points, '完成任务: ' + task.title, task.id);
   } else {
     removePoints(task.id);
   }
 
   Store.saveTasks(tasks);
   renderTasks();
-  showToast(task.completed ? `✅ 完成！+${task.points}积分` : '已取消完成');
+  updatePointsBadge();
+  showToast(task.completed ? '✅ 完成！+' + task.points + '积分' : '已取消完成');
 }
 
 function openTaskAction(taskId) {
@@ -365,13 +391,12 @@ function openTaskAction(taskId) {
   if (!task) return;
 
   if (task.type === 'reading') {
-    switchTab('reading');
-    loadReadingTask(task);
+    switchTab('tabReading');
+    loadReadingForTask(task);
   } else if (task.type === 'dictation') {
-    switchTab('dictation');
-    loadDictationTask(task);
+    switchTab('tabDictation');
+    loadDictationForTask(task);
   } else {
-    // 普通任务 - 拍照提交
     openPhotoModal(taskId);
   }
 }
@@ -384,59 +409,175 @@ function deleteTask(taskId) {
   Store.saveTasks(tasks);
   removePoints(taskId);
   renderTasks();
+  updatePointsBadge();
   showToast('任务已删除');
 }
 
 // ===== 添加任务 =====
 function openAddTaskModal() {
-  document.getElementById('addTaskModal').classList.add('show');
-  document.getElementById('taskTitle').value = '';
-  document.getElementById('taskSubject').value = '数学';
-  document.getElementById('taskPoints').value = '5';
-  document.getElementById('taskDate').value = getTodayStr();
-  document.getElementById('taskTypeNormal').checked = true;
+  const modal = document.getElementById('addTaskModal');
+  if (modal) modal.classList.add('show');
+
+  const titleInput = document.getElementById('taskTitle');
+  if (titleInput) titleInput.value = '';
+
+  const subjectSelect = document.getElementById('taskSubject');
+  if (subjectSelect) subjectSelect.value = '数学';
+
+  const pointsInput = document.getElementById('taskPoints');
+  if (pointsInput) pointsInput.value = '5';
+
+  const dateInput = document.getElementById('taskDate');
+  if (dateInput) dateInput.value = getTodayStr();
+
+  const normalRadio = document.querySelector('input[name="taskType"][value="normal"]');
+  if (normalRadio) normalRadio.checked = true;
+
   updateTypeFields();
+  populateTextbookSelect();
 }
 
 function closeAddTaskModal() {
-  document.getElementById('addTaskModal').classList.remove('show');
+  const modal = document.getElementById('addTaskModal');
+  if (modal) modal.classList.remove('show');
 }
 
 function updateTypeFields() {
-  const isNormal = document.getElementById('taskTypeNormal').checked;
-  document.getElementById('normalFields').style.display = isNormal ? 'block' : 'none';
-  document.getElementById('textbookSection').style.display = isNormal ? 'none' : 'block';
+  const selectedType = document.querySelector('input[name="taskType"]:checked');
+  const type = selectedType ? selectedType.value : 'normal';
+
+  const textbookGroup = document.getElementById('textbookSelectorGroup');
+  const wordListGroup = document.getElementById('wordListGroup');
+  const readingContentGroup = document.getElementById('readingContentGroup');
+
+  if (textbookGroup) textbookGroup.style.display = type !== 'normal' ? 'block' : 'none';
+  if (wordListGroup) wordListGroup.style.display = type === 'dictation' ? 'block' : 'none';
+  if (readingContentGroup) readingContentGroup.style.display = type === 'reading' ? 'block' : 'none';
 }
 
-function addTask() {
+function populateTextbookSelect() {
+  const select = document.getElementById('taskTextbook');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">-- 手动输入 --</option>';
+
+  // 英语
+  if (TEXTBOOK_DATA.english) {
+    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
+      Object.keys(TEXTBOOK_DATA.english[publisher]).forEach(grade => {
+        Object.keys(TEXTBOOK_DATA.english[publisher][grade]).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'en|' + publisher + '|' + grade + '|' + unit;
+          opt.textContent = ' 英语 ' + publisher + ' ' + grade + ' ' + unit;
+          select.appendChild(opt);
+        });
+      });
+    });
+  }
+
+  // 语文
+  if (TEXTBOOK_DATA.chinese) {
+    Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
+      Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
+        Object.keys(TEXTBOOK_DATA.chinese[publisher][grade]).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'cn|' + publisher + '|' + grade + '|' + unit;
+          opt.textContent = ' 语文 ' + publisher + ' ' + grade + ' ' + unit;
+          select.appendChild(opt);
+        });
+      });
+    });
+  }
+
+  // 古文诗歌
+  if (TEXTBOOK_DATA.classical) {
+    Object.keys(TEXTBOOK_DATA.classical).forEach(category => {
+      Object.keys(TEXTBOOK_DATA.classical[category]).forEach(unit => {
+        const opt = document.createElement('option');
+        opt.value = 'cl|' + category + '||' + unit;
+        opt.textContent = ' ' + category + ' ' + unit;
+        select.appendChild(opt);
+      });
+    });
+  }
+}
+
+function onTextbookSelectChange() {
+  const select = document.getElementById('taskTextbook');
+  if (!select || !select.value) return;
+
+  const parts = select.value.split('|');
+  const type = parts[0];
+  const publisher = parts[1];
+  const grade = parts[2];
+  const unit = parts[3];
+
+  const selectedType = document.querySelector('input[name="taskType"]:checked');
+  const currentType = selectedType ? selectedType.value : 'normal';
+
+  if (currentType === 'reading') {
+    const content = getTextbookContent(type, publisher, grade, unit);
+    const textarea = document.getElementById('taskReadingContent');
+    if (textarea && content) textarea.value = content;
+  } else if (currentType === 'dictation') {
+    const words = getTextbookWords(type, publisher, grade, unit);
+    const textarea = document.getElementById('taskWordList');
+    if (textarea && words) {
+      textarea.value = JSON.stringify(words.map(w => w.word));
+    }
+  }
+}
+
+function getTextbookContent(type, publisher, grade, unit) {
+  try {
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.[grade]?.[unit]?.words?.map(w => w.word + ' ' + w.meaning).join('\n') || null;
+    if (type === 'cn') return TEXTBOOK_DATA.chinese[publisher]?.[grade]?.[unit]?.reading || null;
+    if (type === 'cl') return TEXTBOOK_DATA.classical[publisher]?.[unit]?.reading || null;
+  } catch { return null; }
+  return null;
+}
+
+function getTextbookWords(type, publisher, grade, unit) {
+  try {
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.[grade]?.[unit]?.words || null;
+  } catch { return null; }
+  return null;
+}
+
+function saveTask() {
   const title = document.getElementById('taskTitle').value.trim();
   if (!title) { showToast('请输入任务名称'); return; }
 
-  const type = document.getElementById('taskTypeNormal').checked ? 'normal' :
-               document.getElementById('taskTypeReading').checked ? 'reading' : 'dictation';
+  const selectedType = document.querySelector('input[name="taskType"]:checked');
+  const type = selectedType ? selectedType.value : 'normal';
 
   const task = {
     id: generateId(),
-    title,
+    title: title,
     subject: document.getElementById('taskSubject').value,
-    type,
+    type: type,
     points: parseInt(document.getElementById('taskPoints').value) || 5,
-    date: parseRelativeDate(document.getElementById('taskDate').value),
+    date: document.getElementById('taskDate').value || getTodayStr(),
     completed: false,
     completedAt: null,
-    photoKey: null,
+    photoUrl: null,
     wordList: null,
     readingContent: null,
     createdAt: new Date().toISOString(),
   };
 
   // 如果是朗读或听写任务，获取教材内容
-  if (type !== 'normal') {
-    const content = getSelectedTextbookContent();
-    if (type === 'reading') {
-      task.readingContent = content;
-    } else {
-      task.wordList = getSelectedTextbookWords();
+  if (type === 'reading') {
+    const content = document.getElementById('taskReadingContent').value.trim();
+    if (content) task.readingContent = content;
+  } else if (type === 'dictation') {
+    const wordListStr = document.getElementById('taskWordList').value.trim();
+    if (wordListStr) {
+      try {
+        task.wordList = JSON.parse(wordListStr);
+      } catch {
+        task.wordList = wordListStr.split(/[,，\n]/).map(w => w.trim()).filter(w => w);
+      }
     }
   }
 
@@ -449,121 +590,87 @@ function addTask() {
   showToast('✅ 任务已添加！');
 }
 
-// ===== 教材选择器 =====
-function initTextbookSelectors() {
-  const subjectSelect = document.getElementById('textbookSubject');
-  subjectSelect.addEventListener('change', updateTextbookVersions);
-  document.getElementById('textbookVersion').addEventListener('change', updateTextbookUnits);
-  document.getElementById('btnAutoFill').addEventListener('click', autoFillContent);
-  updateTextbookVersions();
-}
+// ===== 朗读打卡 =====
+function initReadingSelect() {
+  const select = document.getElementById('readingSelect');
+  if (!select) return;
 
-function updateTextbookVersions() {
-  const subject = document.getElementById('textbookSubject').value;
-  const versionSelect = document.getElementById('textbookVersion');
-  const unitSelect = document.getElementById('textbookUnit');
+  select.innerHTML = '<option value="">-- 选择课文 --</option>';
 
-  versionSelect.innerHTML = '';
-  unitSelect.innerHTML = '<option value="">请选择单元</option>';
-
-  let versions = [];
-  if (subject === '英语') versions = Object.keys(TEXTBOOK_DATA.english);
-  else if (subject === '语文') versions = Object.keys(TEXTBOOK_DATA.chinese);
-  else if (subject === '古文诗歌') versions = Object.keys(TEXTBOOK_DATA.classical);
-
-  versions.forEach(v => {
-    versionSelect.innerHTML += `<option value="${v}">${v}</option>`;
-  });
-
-  if (versions.length > 0) updateTextbookUnits();
-}
-
-function updateTextbookUnits() {
-  const subject = document.getElementById('textbookSubject').value;
-  const version = document.getElementById('textbookVersion').value;
-  const unitSelect = document.getElementById('textbookUnit');
-
-  unitSelect.innerHTML = '<option value="">请选择单元</option>';
-
-  let data = null;
-  if (subject === '英语' && TEXTBOOK_DATA.english[version]) data = TEXTBOOK_DATA.english[version];
-  else if (subject === '语文' && TEXTBOOK_DATA.chinese[version]) data = TEXTBOOK_DATA.chinese[version];
-  else if (subject === '古文诗歌' && TEXTBOOK_DATA.classical[version]) data = TEXTBOOK_DATA.classical[version];
-
-  if (data) {
-    Object.keys(data).forEach(grade => {
-      Object.keys(data[grade]).forEach(unit => {
-        unitSelect.innerHTML += `<option value="${grade}|${unit}">${grade} - ${unit}</option>`;
+  // 语文课文
+  if (TEXTBOOK_DATA.chinese) {
+    Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
+      Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
+        Object.keys(TEXTBOOK_DATA.chinese[publisher][grade]).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'cn|' + publisher + '|' + grade + '|' + unit;
+          opt.textContent = publisher + ' ' + grade + ' ' + unit;
+          select.appendChild(opt);
+        });
       });
     });
   }
-}
 
-function getSelectedTextbookContent() {
-  const subject = document.getElementById('textbookSubject').value;
-  const version = document.getElementById('textbookVersion').value;
-  const unitValue = document.getElementById('textbookUnit').value;
-
-  if (!unitValue) return null;
-
-  const [grade, unit] = unitValue.split('|');
-  let data = null;
-
-  if (subject === '英语') data = TEXTBOOK_DATA.english[version]?.[grade]?.[unit];
-  else if (subject === '语文') data = TEXTBOOK_DATA.chinese[version]?.[grade]?.[unit];
-  else if (subject === '古文诗歌') data = TEXTBOOK_DATA.classical[version]?.[unit];
-
-  if (!data) return null;
-  return data.reading || null;
-}
-
-function getSelectedTextbookWords() {
-  const subject = document.getElementById('textbookSubject').value;
-  const version = document.getElementById('textbookVersion').value;
-  const unitValue = document.getElementById('textbookUnit').value;
-
-  if (!unitValue || subject !== '英语') return null;
-
-  const [grade, unit] = unitValue.split('|');
-  const data = TEXTBOOK_DATA.english[version]?.[grade]?.[unit];
-  return data?.words || null;
-}
-
-function autoFillContent() {
-  const subject = document.getElementById('textbookSubject').value;
-  const type = document.getElementById('taskTypeReading').checked ? 'reading' : 'dictation';
-
-  if (type === 'reading') {
-    const content = getSelectedTextbookContent();
-    if (content) {
-      document.getElementById('manualContent').value = content;
-      showToast('✅ 课文内容已自动填充');
-    } else {
-      showToast('请先选择教材单元');
-    }
-  } else {
-    const words = getSelectedTextbookWords();
-    if (words) {
-      const wordList = words.map(w => w.word).join(',');
-      document.getElementById('manualWordList').value = wordList;
-      showToast(`✅ 已填充 ${words.length} 个单词`);
-    } else {
-      showToast('请先选择英语教材单元');
-    }
+  // 古文诗歌
+  if (TEXTBOOK_DATA.classical) {
+    Object.keys(TEXTBOOK_DATA.classical).forEach(category => {
+      Object.keys(TEXTBOOK_DATA.classical[category]).forEach(unit => {
+        const opt = document.createElement('option');
+        opt.value = 'cl|' + category + '||' + unit;
+        opt.textContent = category + ' ' + unit;
+        select.appendChild(opt);
+      });
+    });
   }
+
+  select.addEventListener('change', () => {
+    const val = select.value;
+    const contentEl = document.getElementById('readingContent');
+    if (!contentEl) return;
+
+    if (!val) {
+      contentEl.innerHTML = '<p class="placeholder-text">请先选择一篇课文</p>';
+      return;
+    }
+
+    const parts = val.split('|');
+    const content = getTextbookContent(parts[0], parts[1], parts[2], parts[3]);
+    if (content) {
+      contentEl.innerHTML = '<div style="white-space:pre-wrap;line-height:1.8;font-size:16px;">' + escapeHtml(content) + '</div>';
+    } else {
+      contentEl.innerHTML = '<p class="placeholder-text">暂无内容</p>';
+    }
+  });
 }
 
-// ===== 朗读打卡 =====
-function loadReadingTask(task) {
-  const content = task.readingContent || '请在添加任务时填入课文内容';
-  document.getElementById('readingText').textContent = content;
-  document.getElementById('readingStatus').textContent = '';
-  document.getElementById('btnRecord').classList.remove('recording');
-  document.getElementById('btnRecord').innerHTML = '<span class="record-icon"></span> 开始朗读';
+function loadReadingForTask(task) {
+  const contentEl = document.getElementById('readingContent');
+  if (!contentEl) return;
+
+  if (task.readingContent) {
+    contentEl.innerHTML = '<div style="white-space:pre-wrap;line-height:1.8;font-size:16px;">' + escapeHtml(task.readingContent) + '</div>';
+  } else {
+    contentEl.innerHTML = '<p class="placeholder-text">该任务没有课文内容</p>';
+  }
+
+  const statusEl = document.getElementById('recordStatus');
+  if (statusEl) statusEl.textContent = '';
+
+  const btnRecord = document.getElementById('btnRecord');
+  if (btnRecord) {
+    btnRecord.innerHTML = '<span class="record-icon">🎙️</span><span class="record-text">开始录音</span>';
+    btnRecord.classList.remove('recording');
+  }
   recording = false;
+
+  // 保存当前任务ID，录音完成后标记完成
+  btnRecord.dataset.taskId = task.id;
 }
 
 async function toggleRecording() {
+  const btnRecord = document.getElementById('btnRecord');
+  if (!btnRecord) return;
+
   if (recording) {
     stopRecording();
   } else {
@@ -581,17 +688,26 @@ async function startRecording() {
       audioChunks.push(e.data);
     };
 
-    mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    mediaRecorder.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
-      await processRecording(audioBlob);
+      const statusEl = document.getElementById('recordStatus');
+      if (statusEl) statusEl.textContent = '✅ 录音完成！';
+
+      // 标记朗读任务完成
+      const btnRecord = document.getElementById('btnRecord');
+      const taskId = btnRecord ? btnRecord.dataset.taskId : null;
+      if (taskId) {
+        completeTaskById(taskId, '朗读完成');
+      }
     };
 
     mediaRecorder.start();
     recording = true;
-    document.getElementById('btnRecord').classList.add('recording');
-    document.getElementById('btnRecord').innerHTML = '<span class="record-icon"></span> 停止录音';
-    document.getElementById('readingStatus').textContent = '🔴 录音中...请朗读课文';
+    btnRecord.innerHTML = '<span class="record-icon">️</span><span class="record-text">停止录音</span>';
+    btnRecord.classList.add('recording');
+
+    const statusEl = document.getElementById('recordStatus');
+    if (statusEl) statusEl.textContent = '🔴 录音中...请朗读课文';
   } catch (err) {
     showToast('无法访问麦克风，请检查权限');
   }
@@ -602,113 +718,55 @@ function stopRecording() {
     mediaRecorder.stop();
   }
   recording = false;
-  document.getElementById('btnRecord').classList.remove('recording');
-  document.getElementById('btnRecord').innerHTML = '<span class="record-icon">🎤</span> 开始朗读';
-  document.getElementById('readingStatus').textContent = '处理中...';
-}
-
-async function processRecording(audioBlob) {
-  // 使用浏览器自带的 SpeechRecognition 进行识别
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    // 降级方案：直接标记完成
-    document.getElementById('readingStatus').textContent = '✅ 录音完成！（浏览器不支持语音识别，已标记完成）';
-    completeReadingTask();
-    return;
-  }
-
-  try {
-    // 将录音转为文字（通过文件读取 + 语音识别）
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'zh-CN';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    let transcript = '';
-
-    recognition.onresult = (event) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-      }
-    };
-
-    recognition.onend = () => {
-      const readingText = document.getElementById('readingText').textContent;
-      const completeness = calculateCompleteness(transcript, readingText);
-
-      if (completeness >= 60) {
-        document.getElementById('readingStatus').textContent = `✅ 朗读完成！完整度 ${completeness}%，已发放积分`;
-        completeReadingTask();
-      } else {
-        document.getElementById('readingStatus').textContent = `⚠️ 完整度 ${completeness}%，建议再读一遍（需达到60%以上）`;
-      }
-    };
-
-    recognition.onerror = () => {
-      document.getElementById('readingStatus').textContent = '⚠️ 语音识别失败，已标记完成';
-      completeReadingTask();
-    };
-
-    recognition.start();
-
-    // 播放录音让用户听到自己读的
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    audio.play();
-    audio.onended = () => {
-      recognition.stop();
-      URL.revokeObjectURL(audioUrl);
-    };
-
-    document.getElementById('readingStatus').textContent = '🎧 播放录音中，随后自动识别...';
-  } catch {
-    document.getElementById('readingStatus').textContent = '✅ 录音完成！已标记完成';
-    completeReadingTask();
-  }
-}
-
-function calculateCompleteness(spoken, original) {
-  if (!spoken || !original) return 0;
-
-  // 简化版完整度计算：检查原文中的关键句是否在语音中出现
-  const sentences = original.split(/[。！？\n]/).filter(s => s.trim().length > 5);
-  if (sentences.length === 0) return 100;
-
-  let matched = 0;
-  sentences.forEach(sentence => {
-    const keywords = sentence.trim().substring(0, Math.min(10, sentence.trim().length));
-    if (spoken.includes(keywords)) matched++;
-  });
-
-  return Math.round((matched / sentences.length) * 100);
-}
-
-function completeReadingTask() {
-  const tasks = Store.getTasks();
-  const today = getTodayStr();
-  const task = tasks.find(t => t.date === today && t.type === 'reading' && !t.completed);
-
-  if (task) {
-    task.completed = true;
-    task.completedAt = new Date().toISOString();
-    addPoints(task.points, `朗读完成: ${task.title}`, task.id);
-    Store.saveTasks(tasks);
-    renderTasks();
+  const btnRecord = document.getElementById('btnRecord');
+  if (btnRecord) {
+    btnRecord.innerHTML = '<span class="record-icon">🎙️</span><span class="record-text">开始录音</span>';
+    btnRecord.classList.remove('recording');
   }
 }
 
 // ===== 英语听写 =====
-function loadDictationTask(task) {
+function initDictationSelect() {
+  const select = document.getElementById('dictationSelect');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">-- 选择单元 --</option>';
+
+  if (TEXTBOOK_DATA.english) {
+    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
+      Object.keys(TEXTBOOK_DATA.english[publisher]).forEach(grade => {
+        Object.keys(TEXTBOOK_DATA.english[publisher][grade]).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'en|' + publisher + '|' + grade + '|' + unit;
+          opt.textContent = publisher + ' ' + grade + ' ' + unit;
+          select.appendChild(opt);
+        });
+      });
+    });
+  }
+
+  select.addEventListener('change', () => {
+    const val = select.value;
+    const wordEl = document.getElementById('currentWord');
+    if (!wordEl) return;
+
+    if (!val) {
+      wordEl.innerHTML = '<p class="placeholder-text">选择单元后点击开始听写</p>';
+      return;
+    }
+
+    const parts = val.split('|');
+    const words = getTextbookWords(parts[0], parts[1], parts[2], parts[3]);
+    if (words) {
+      wordEl.innerHTML = '<div><div class="word-display">' + words.length + ' 个单词</div><div class="word-hint">点击"开始听写"开始</div></div>';
+    }
+  });
+}
+
+function loadDictationForTask(task) {
   if (task.wordList && task.wordList.length > 0) {
     dictationWords = [...task.wordList];
   } else {
-    // 从手动输入的词库解析
-    const wordListText = document.getElementById('manualWordList')?.value || '';
-    dictationWords = wordListText.split(/[,，\n]/).map(w => w.trim()).filter(w => w);
-  }
-
-  if (dictationWords.length === 0) {
     dictationWords = ['hello', 'world', 'student', 'teacher', 'school'];
   }
 
@@ -716,20 +774,50 @@ function loadDictationTask(task) {
   dictationCorrect = 0;
   dictationTotal = 0;
 
-  document.getElementById('dictationStatus').textContent = `共 ${dictationWords.length} 个单词，点击开始`;
-  document.getElementById('currentWordDisplay').innerHTML = '<span class="word-hint">点击"开始听写"开始</span>';
-  document.getElementById('answerInput').value = '';
-  document.getElementById('dictationResult').classList.remove('show');
+  const wordEl = document.getElementById('currentWord');
+  if (wordEl) {
+    wordEl.innerHTML = '<div><div class="word-display">' + dictationWords.length + ' 个单词</div><div class="word-hint">点击"开始听写"开始</div></div>';
+  }
+
+  const answerDiv = document.getElementById('answerInput');
+  if (answerDiv) answerDiv.style.display = 'none';
+
+  const resultEl = document.getElementById('dictationResult');
+  if (resultEl) {
+    resultEl.className = 'dictation-result';
+    resultEl.textContent = '';
+  }
+
+  // 保存任务ID
+  const btnStart = document.getElementById('btnStartDictation');
+  if (btnStart) btnStart.dataset.taskId = task.id;
 }
 
 function startDictation() {
+  // 先从选择器获取单词
+  const select = document.getElementById('dictationSelect');
+  if (select && select.value && dictationWords.length === 0) {
+    const parts = select.value.split('|');
+    const words = getTextbookWords(parts[0], parts[1], parts[2], parts[3]);
+    if (words) {
+      dictationWords = words.map(w => w.word);
+    }
+  }
+
   if (dictationWords.length === 0) {
-    showToast('请先添加听写任务或输入单词');
+    showToast('请先选择单元或添加听写任务');
     return;
   }
+
   currentWordIndex = 0;
   dictationCorrect = 0;
   dictationTotal = 0;
+
+  const btnStart = document.getElementById('btnStartDictation');
+  const btnStop = document.getElementById('btnStopDictation');
+  if (btnStart) btnStart.style.display = 'none';
+  if (btnStop) btnStop.style.display = 'flex';
+
   speakCurrentWord();
 }
 
@@ -740,106 +828,207 @@ function speakCurrentWord() {
   }
 
   const word = dictationWords[currentWordIndex];
-  document.getElementById('currentWordDisplay').innerHTML = `
-    <div>
-      <div class="word-display">第 ${currentWordIndex + 1}/${dictationWords.length} 个</div>
-      <div class="word-hint">仔细听，然后输入你听到的单词</div>
-    </div>`;
-  document.getElementById('answerInput').value = '';
-  document.getElementById('dictationResult').classList.remove('show');
-  document.getElementById('answerInput').focus();
+  const wordEl = document.getElementById('currentWord');
+  if (wordEl) {
+    wordEl.innerHTML = '<div><div class="word-display">第 ' + (currentWordIndex + 1) + '/' + dictationWords.length + ' 个</div><div class="word-hint">仔细听，然后输入你听到的单词</div></div>';
+  }
 
-  // TTS 朗读
+  const answerDiv = document.getElementById('answerInput');
+  if (answerDiv) answerDiv.style.display = 'flex';
+
+  const answerInput = document.getElementById('wordAnswer');
+  if (answerInput) {
+    answerInput.value = '';
+    setTimeout(() => answerInput.focus(), 100);
+  }
+
+  const resultEl = document.getElementById('dictationResult');
+  if (resultEl) {
+    resultEl.className = 'dictation-result';
+    resultEl.textContent = '';
+  }
+
   speakWord(word);
 }
 
 function speakWord(word) {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8;
-    utterance.pitch = 1;
+  if (!('speechSynthesis' in window)) return;
 
-    // 尝试使用英语语音
-    const voices = window.speechSynthesis.getVoices();
-    const enVoice = voices.find(v => v.lang.startsWith('en'));
-    if (enVoice) utterance.voice = enVoice;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = 'en-US';
+  utterance.rate = 0.8;
 
-    window.speechSynthesis.speak(utterance);
+  const voices = window.speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) utterance.voice = enVoice;
 
-    // 读两遍
-    utterance.onend = () => {
-      setTimeout(() => {
-        const u2 = new SpeechSynthesisUtterance(word);
-        u2.lang = 'en-US';
-        u2.rate = 0.8;
-        if (enVoice) u2.voice = enVoice;
-        window.speechSynthesis.speak(u2);
-      }, 800);
-    };
-  }
+  window.speechSynthesis.speak(utterance);
+
+  utterance.onend = () => {
+    setTimeout(() => {
+      const u2 = new SpeechSynthesisUtterance(word);
+      u2.lang = 'en-US';
+      u2.rate = 0.8;
+      if (enVoice) u2.voice = enVoice;
+      window.speechSynthesis.speak(u2);
+    }, 800);
+  };
 }
 
 function submitAnswer() {
-  const answer = document.getElementById('answerInput').value.trim().toLowerCase();
+  const answerInput = document.getElementById('wordAnswer');
+  if (!answerInput) return;
+
+  const answer = answerInput.value.trim().toLowerCase();
   if (!answer) return;
 
   const correct = dictationWords[currentWordIndex].toLowerCase();
   dictationTotal++;
 
   const resultEl = document.getElementById('dictationResult');
+  if (!resultEl) return;
 
   if (answer === correct) {
     dictationCorrect++;
     resultEl.className = 'dictation-result show correct';
-    resultEl.textContent = `✅ 正确！"${correct}"`;
+    resultEl.textContent = '✅ 正确！';
   } else {
     resultEl.className = 'dictation-result show wrong';
-    resultEl.textContent = `❌ 错误！正确答案是 "${correct}"，你写的是 "${answer}"`;
+    resultEl.textContent = '❌ 正确答案：' + dictationWords[currentWordIndex];
   }
 
   currentWordIndex++;
-  document.getElementById('dictationStatus').textContent =
-    `进度: ${currentWordIndex}/${dictationWords.length} | 正确: ${dictationCorrect}`;
+  setTimeout(() => speakCurrentWord(), 1500);
+}
 
-  setTimeout(() => speakCurrentWord(), 2000);
+function stopDictation() {
+  finishDictation();
 }
 
 function finishDictation() {
-  const score = dictationTotal > 0 ? Math.round((dictationCorrect / dictationTotal) * 100) : 0;
+  const btnStart = document.getElementById('btnStartDictation');
+  const btnStop = document.getElementById('btnStopDictation');
+  if (btnStart) btnStart.style.display = 'flex';
+  if (btnStop) btnStop.style.display = 'none';
 
-  document.getElementById('currentWordDisplay').innerHTML = `
-    <div>
-      <div class="word-display">听写完成！</div>
-      <div class="word-hint">正确率: ${score}% (${dictationCorrect}/${dictationTotal})</div>
-    </div>`;
-
-  if (score >= 80) {
-    const tasks = Store.getTasks();
-    const today = getTodayStr();
-    const task = tasks.find(t => t.date === today && t.type === 'dictation' && !t.completed);
-
-    if (task) {
-      task.completed = true;
-      task.completedAt = new Date().toISOString();
-      addPoints(task.points, `听写完成: ${task.title} (${score}分)`, task.id);
-      Store.saveTasks(tasks);
-      renderTasks();
-    }
-
-    document.getElementById('dictationStatus').textContent = `🎉 太棒了！正确率 ${score}%，积分已发放！`;
-  } else {
-    document.getElementById('dictationStatus').textContent = `正确率 ${score}%，需要达到80%才能获得积分，再试一次吧！`;
+  const wordEl = document.getElementById('currentWord');
+  if (wordEl) {
+    wordEl.innerHTML = '<div><div class="word-display">听写结束</div><div class="word-hint">正确 ' + dictationCorrect + '/' + dictationTotal + '</div></div>';
   }
+
+  const answerDiv = document.getElementById('answerInput');
+  if (answerDiv) answerDiv.style.display = 'none';
+
+  const resultEl = document.getElementById('dictationResult');
+  if (resultEl) {
+    resultEl.className = 'dictation-result show';
+    resultEl.textContent = '📊 听写结果：正确 ' + dictationCorrect + '/' + dictationTotal + ' (' + (dictationTotal > 0 ? Math.round(dictationCorrect / dictationTotal * 100) : 0) + '%)';
+  }
+
+  // 如果正确率 >= 60%，标记任务完成
+  if (dictationTotal > 0 && dictationCorrect / dictationTotal >= 0.6) {
+    const btnStart = document.getElementById('btnStartDictation');
+    const taskId = btnStart ? btnStart.dataset.taskId : null;
+    if (taskId) {
+      completeTaskById(taskId, '听写完成');
+    }
+    showToast('🎉 听写完成！正确率 ' + Math.round(dictationCorrect / dictationTotal * 100) + '%');
+  } else if (dictationTotal > 0) {
+    showToast('正确率 ' + Math.round(dictationCorrect / dictationTotal * 100) + '%，继续加油！');
+  }
+
+  dictationWords = [];
 }
 
-// 加载语音列表（某些浏览器需要）
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.getVoices();
-  };
+// ===== 拍照提交 =====
+function initPhotoUpload() {
+  // 已在 initModalButtons 中绑定
+}
+
+function openPhotoModal(taskId) {
+  currentPhotoTaskId = taskId;
+  const modal = document.getElementById('photoModal');
+  if (modal) modal.classList.add('show');
+
+  const preview = document.getElementById('photoPreview');
+  if (preview) {
+    preview.style.display = 'none';
+    preview.src = '';
+  }
+
+  const placeholder = document.getElementById('photoPlaceholder');
+  if (placeholder) placeholder.style.display = 'block';
+
+  const input = document.getElementById('photoInput');
+  if (input) input.value = '';
+}
+
+function closePhotoModalFn() {
+  const modal = document.getElementById('photoModal');
+  if (modal) modal.classList.remove('show');
+  currentPhotoTaskId = null;
+}
+
+function triggerPhotoInput() {
+  const input = document.getElementById('photoInput');
+  if (input) input.click();
+}
+
+// 监听文件选择
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'photoInput' && e.target.files.length > 0) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const preview = document.getElementById('photoPreview');
+      const placeholder = document.getElementById('photoPlaceholder');
+      if (preview) {
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+      }
+      if (placeholder) placeholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+function confirmPhoto() {
+  const preview = document.getElementById('photoPreview');
+  if (!preview || !preview.src || preview.style.display === 'none') {
+    showToast('请先拍照或选择照片');
+    return;
+  }
+
+  if (!currentPhotoTaskId) {
+    showToast('任务信息丢失，请重试');
+    return;
+  }
+
+  // 保存照片到 localStorage（base64）
+  const photos = Store.getPhotos();
+  photos[currentPhotoTaskId] = preview.src;
+  Store.savePhotos(photos);
+
+  // 标记任务完成
+  completeTaskById(currentPhotoTaskId, '拍照提交');
+
+  closePhotoModalFn();
+  showToast('✅ 任务已完成！');
+}
+
+// ===== 完成任务通用方法 =====
+function completeTaskById(taskId, reason) {
+  const tasks = Store.getTasks();
+  const task = tasks.find(t => t.id === taskId);
+  if (!task || task.completed) return;
+
+  task.completed = true;
+  task.completedAt = new Date().toISOString();
+  addPoints(task.points, reason + ': ' + task.title, task.id);
+  Store.saveTasks(tasks);
+  renderTasks();
+  updatePointsBadge();
 }
 
 // ===== 积分系统 =====
@@ -847,149 +1036,59 @@ function addPoints(points, reason, taskId) {
   const pointsList = Store.getPoints();
   pointsList.push({
     id: generateId(),
-    taskId,
-    points,
-    reason,
+    points: points,
+    reason: reason,
+    taskId: taskId,
     date: getTodayStr(),
     createdAt: new Date().toISOString(),
   });
   Store.savePoints(pointsList);
+  updatePointsBadge();
 }
 
 function removePoints(taskId) {
   let pointsList = Store.getPoints();
   pointsList = pointsList.filter(p => p.taskId !== taskId);
   Store.savePoints(pointsList);
+  updatePointsBadge();
+}
+
+function updatePointsBadge() {
+  const pointsList = Store.getPoints();
+  const total = pointsList.reduce((sum, p) => sum + p.points, 0);
+  const el = document.getElementById('totalPoints');
+  if (el) el.textContent = total;
 }
 
 function renderPoints() {
   const pointsList = Store.getPoints();
   const today = getTodayStr();
 
-  const totalPoints = pointsList.reduce((sum, p) => sum + p.points, 0);
+  const total = pointsList.reduce((sum, p) => sum + p.points, 0);
   const todayPoints = pointsList.filter(p => p.date === today).reduce((sum, p) => sum + p.points, 0);
 
-  document.getElementById('totalPoints').textContent = totalPoints;
-  document.getElementById('todayPoints').textContent = todayPoints;
+  const summaryTotal = document.getElementById('summaryTotal');
+  if (summaryTotal) summaryTotal.textContent = total;
 
-  const historyContainer = document.getElementById('pointsHistory');
-  const recentPoints = [...pointsList].reverse().slice(0, 20);
+  const summaryToday = document.getElementById('summaryToday');
+  if (summaryToday) summaryToday.textContent = todayPoints;
 
-  if (recentPoints.length === 0) {
-    historyContainer.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🏆</div>
-        <p>还没有积分记录</p>
-        <p class="empty-hint">完成任务就能获得积分哦</p>
-      </div>`;
+  const historyEl = document.getElementById('pointsHistory');
+  if (!historyEl) return;
+
+  if (pointsList.length === 0) {
+    historyEl.innerHTML = '<div class="empty-state"><p>还没有积分记录</p></div>';
     return;
   }
 
-  historyContainer.innerHTML = `
-    <h3>最近记录</h3>
-    <div class="history-list">
-      ${recentPoints.map(p => `
-        <div class="history-item">
-          <div class="history-item-info">
-            <div class="history-item-title">${escapeHtml(p.reason)}</div>
-            <div class="history-item-date">${formatDate(p.date)}</div>
-          </div>
-          <div class="history-item-points">+${p.points}</div>
-        </div>
-      `).join('')}
-    </div>`;
+  const sorted = [...pointsList].reverse();
+  historyEl.innerHTML = sorted.map(p => `
+    <div class="history-item">
+      <div class="history-item-info">
+        <div class="history-item-title">${escapeHtml(p.reason)}</div>
+        <div class="history-item-date">${p.date}</div>
+      </div>
+      <div class="history-item-points">+${p.points}</div>
+    </div>
+  `).join('');
 }
-
-// ===== 拍照功能 =====
-function initPhotoUpload() {
-  const photoInput = document.getElementById('photoInput');
-  const photoPlaceholder = document.getElementById('photoPlaceholder');
-
-  if (photoPlaceholder) {
-    photoPlaceholder.addEventListener('click', () => photoInput.click());
-  }
-
-  if (photoInput) {
-    photoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const preview = document.getElementById('photoPreview');
-        preview.src = ev.target.result;
-        preview.style.display = 'block';
-        photoPlaceholder.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-}
-
-let currentPhotoTaskId = null;
-
-function openPhotoModal(taskId) {
-  currentPhotoTaskId = taskId;
-  document.getElementById('photoPreview').style.display = 'none';
-  document.getElementById('photoPlaceholder').style.display = 'block';
-  document.getElementById('photoInput').value = '';
-
-  // 检查是否已有照片
-  const photos = Store.getPhotos();
-  if (photos[taskId]) {
-    document.getElementById('photoPreview').src = photos[taskId];
-    document.getElementById('photoPreview').style.display = 'block';
-    document.getElementById('photoPlaceholder').style.display = 'none';
-  }
-
-  document.getElementById('photoModal').classList.add('show');
-}
-
-function closePhotoModal() {
-  document.getElementById('photoModal').classList.remove('show');
-}
-
-function submitPhoto() {
-  const preview = document.getElementById('photoPreview');
-  if (preview.style.display === 'none' || !preview.src) {
-    showToast('请先拍照或选择照片');
-    return;
-  }
-
-  // 保存照片
-  const photos = Store.getPhotos();
-  photos[currentPhotoTaskId] = preview.src;
-  Store.savePhotos(photos);
-
-  // 标记任务完成
-  const tasks = Store.getTasks();
-  const task = tasks.find(t => t.id === currentPhotoTaskId);
-  if (task && !task.completed) {
-    task.completed = true;
-    task.completedAt = new Date().toISOString();
-    task.photoKey = 'photo_' + currentPhotoTaskId;
-    addPoints(task.points, `完成任务: ${task.title}`, task.id);
-    Store.saveTasks(tasks);
-    renderTasks();
-  }
-
-  closePhotoModal();
-  showToast('✅ 照片已提交，积分已发放！');
-}
-
-// ===== 工具函数 =====
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// 键盘事件 - 听写输入框回车提交
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && currentTab === 'dictation') {
-    const answerInput = document.getElementById('answerInput');
-    if (document.activeElement === answerInput) {
-      submitAnswer();
-    }
-  }
-});
