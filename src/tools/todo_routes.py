@@ -524,3 +524,44 @@ async def get_points_history(limit: int = 50):
         return {"code": 0, "data": resp.data}
     except APIError as e:
         raise HTTPException(status_code=500, detail=f"Query failed: {e.message}")
+
+
+# ========== Textbook Content ==========
+
+@router.get("/textbook/catalog")
+async def get_textbook_catalog():
+    """Get textbook catalog (subjects, versions, grades, units)"""
+    from tools.textbook_service import get_catalog
+    return {"code": 0, "data": get_catalog()}
+
+
+@router.post("/textbook/generate-words")
+async def generate_textbook_words(req: dict):
+    """Generate English word list for a specific textbook unit via LLM"""
+    from tools.textbook_service import generate_english_words
+    try:
+        subject = req.get("subject", "english")
+        grade = req.get("grade", "七年级上册")
+        version = req.get("version", "人教版(PEP)")
+        unit = int(req.get("unit", 1))
+        data = generate_english_words(subject, grade, version, unit)
+        return {"code": 0, "data": data}
+    except Exception as e:
+        logger.error(f"Failed to generate words: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/textbook/generate-reading")
+async def generate_textbook_reading(req: dict):
+    """Generate reading passage for a specific textbook unit via LLM"""
+    from tools.textbook_service import generate_reading_text
+    try:
+        subject = req.get("subject", "english")
+        grade = req.get("grade", "七年级上册")
+        version = req.get("version", "人教版(PEP)")
+        unit = int(req.get("unit", 1))
+        data = generate_reading_text(subject, grade, version, unit)
+        return {"code": 0, "data": data}
+    except Exception as e:
+        logger.error(f"Failed to generate reading text: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -412,6 +412,22 @@ body {
       <label>Description</label>
       <textarea id="taskDesc" placeholder="Optional description..."></textarea>
     </div>
+    <div id="textbookSelector" style="display:none; background:#f0f9ff; border-radius:12px; padding:12px; margin-bottom:12px;">
+      <label style="font-weight:600; color:#1e40af; margin-bottom:8px; display:block;">📖 Auto-fill from Textbook</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <select id="tbGrade" onchange="onTextbookChange()" style="font-size:13px;">
+          <option value="">-- Grade --</option>
+        </select>
+        <select id="tbVersion" onchange="onTextbookChange()" style="font-size:13px;">
+          <option value="">-- Version --</option>
+        </select>
+        <select id="tbUnit" style="font-size:13px;">
+          <option value="">-- Unit --</option>
+        </select>
+        <button class="btn btn-primary" onclick="fillFromTextbook()" style="font-size:13px; padding:8px;">Auto Fill</button>
+      </div>
+      <div id="textbookLoading" style="display:none; text-align:center; padding:8px; color:#6366f1;">Loading textbook content...</div>
+    </div>
     <div id="readingFields" style="display:none;">
       <div class="form-group">
         <label>Reading Text</label>
@@ -617,6 +633,91 @@ function onTaskTypeChange() {
   const type = document.getElementById('taskType').value;
   document.getElementById('readingFields').style.display = type === 'reading' ? 'block' : 'none';
   document.getElementById('dictationFields').style.display = type === 'dictation' ? 'block' : 'none';
+  const showTextbook = (type === 'reading' || type === 'dictation');
+  document.getElementById('textbookSelector').style.display = showTextbook ? 'block' : 'none';
+  if (showTextbook) {
+    initTextbookSelector(type);
+  }
+}
+
+let textbookCatalog = null;
+async function initTextbookSelector(taskType) {
+  if (!textbookCatalog) {
+    try {
+      const res = await fetch(`${API}/textbook/catalog`);
+      const data = await res.json();
+      textbookCatalog = data.data;
+    } catch(e) { console.error('Failed to load catalog', e); return; }
+  }
+  const subjectKey = taskType === 'dictation' ? 'english' : 'english';
+  const cat = textbookCatalog[subjectKey];
+  if (!cat) return;
+  const gradeSel = document.getElementById('tbGrade');
+  const versionSel = document.getElementById('tbVersion');
+  gradeSel.innerHTML = '<option value="">-- Grade --</option>';
+  cat.grades.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; gradeSel.appendChild(o); });
+  versionSel.innerHTML = '<option value="">-- Version --</option>';
+  cat.versions.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; versionSel.appendChild(o); });
+  document.getElementById('tbUnit').innerHTML = '<option value="">-- Unit --</option>';
+}
+
+function onTextbookChange() {
+  const grade = document.getElementById('tbGrade').value;
+  const subjectKey = document.getElementById('taskType').value === 'dictation' ? 'english' : 'english';
+  const cat = textbookCatalog ? textbookCatalog[subjectKey] : null;
+  const unitSel = document.getElementById('tbUnit');
+  unitSel.innerHTML = '<option value="">-- Unit --</option>';
+  if (grade && cat && cat.units_range[grade]) {
+    cat.units_range[grade].forEach(u => {
+      const o = document.createElement('option'); o.value = u; o.textContent = 'Unit ' + u;
+      unitSel.appendChild(o);
+    });
+  }
+}
+
+async function fillFromTextbook() {
+  const taskType = document.getElementById('taskType').value;
+  const grade = document.getElementById('tbGrade').value;
+  const version = document.getElementById('tbVersion').value;
+  const unit = document.getElementById('tbUnit').value;
+  if (!grade || !version || !unit) { showToast('Please select grade, version and unit'); return; }
+
+  document.getElementById('textbookLoading').style.display = 'block';
+  try {
+    if (taskType === 'dictation') {
+      const res = await fetch(`${API}/textbook/generate-words`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ subject: 'english', grade, version, unit: parseInt(unit) })
+      });
+      const data = await res.json();
+      if (data.code === 0 && data.data.words) {
+        const words = data.data.words.map(w => w.word || w.en || '').filter(w => w);
+        document.getElementById('taskWordList').value = words.join('\n');
+        if (!document.getElementById('taskTitle').value.trim()) {
+          document.getElementById('taskTitle').value = `Unit ${unit} Dictation` + (data.data.unit_title ? ` - ${data.data.unit_title}` : '');
+        }
+        showToast(`Loaded ${words.length} words!`);
+      }
+    } else if (taskType === 'reading') {
+      const res = await fetch(`${API}/textbook/generate-reading`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ subject: 'english', grade, version, unit: parseInt(unit) })
+      });
+      const data = await res.json();
+      if (data.code === 0 && data.data.passages) {
+        const text = data.data.passages.map(p => (p.title ? p.title + '\n' : '') + p.content).join('\n\n');
+        document.getElementById('taskTextContent').value = text;
+        if (!document.getElementById('taskTitle').value.trim()) {
+          document.getElementById('taskTitle').value = `Unit ${unit} Reading` + (data.data.unit_title ? ` - ${data.data.unit_title}` : '');
+        }
+        showToast('Reading text loaded!');
+      }
+    }
+  } catch(e) {
+    console.error('Failed to fill from textbook', e);
+    showToast('Failed to load textbook content');
+  }
+  document.getElementById('textbookLoading').style.display = 'none';
 }
 
 async function saveTask() {
