@@ -71,31 +71,71 @@
       <div class="section-header">
         <h2>🔤 英语听写</h2>
       </div>
-      <div class="dictation-panel">
-        <div class="textbook-selector">
-          <label>选择单元：</label>
-          <select id="dictationSelect">
-            <option value="">-- 选择单元 --</option>
+
+      <!-- Step 0: Select -->
+      <div id="dictStepSelect">
+        <div class="textbook-select">
+          <select id="dictationTextbook">
+            <option value="">选择教材版本</option>
+            <option value="yl-7a">译林版 七年级上(2026秋)</option>
+          </select>
+          <select id="dictationUnit">
+            <option value="">选择单元</option>
           </select>
         </div>
-        <div class="dictation-controls">
-          <button class="btn-start-dictation" id="btnStartDictation">
-            <span>🔊</span> 开始听写
-          </button>
-          <button class="btn-stop-dictation" id="btnStopDictation" style="display:none">
-            <span>️</span> 结束听写
-          </button>
+        <div id="dictWordCount" style="text-align:center;color:var(--text-secondary);font-size:14px;margin-top:8px"></div>
+        <button class="btn-primary" id="btnStartStudy" style="width:100%;margin-top:16px;display:none">📖 开始学习单词</button>
+      </div>
+
+      <!-- Step 1: Study word cards -->
+      <div id="dictStepStudy" style="display:none">
+        <div class="word-card">
+          <div class="word-card-word" id="studyWord"></div>
+          <div class="word-card-phonetic" id="studyPhonetic"></div>
+          <div class="word-card-meaning" id="studyMeaning"></div>
+          <div class="word-card-tip" id="studyTip"></div>
         </div>
-        <div class="dictation-area" id="dictationArea">
-          <div class="current-word" id="currentWord">
-            <p class="placeholder-text">选择单元后点击开始听写</p>
-          </div>
-          <div class="answer-input" id="answerInput" style="display:none">
-            <input type="text" id="wordAnswer" placeholder="输入你听到的单词" autocomplete="off">
-            <button class="btn-submit-answer" id="btnSubmitAnswer">确认</button>
-          </div>
+        <div class="word-card-nav">
+          <button class="date-nav-btn" id="btnPrevWord">◀</button>
+          <span class="word-card-counter" id="studyCounter">1/20</span>
+          <button class="date-nav-btn" id="btnNextWord">▶</button>
         </div>
-        <div class="dictation-result" id="dictationResult"></div>
+        <button class="btn-primary" id="btnStartDict" style="width:100%;margin-top:16px"> 开始听写</button>
+      </div>
+
+      <!-- Step 2: Dictation -->
+      <div id="dictStepDictate" style="display:none">
+        <div class="dictation-progress">
+          <span id="dictRoundLabel">第1轮</span>
+          <span id="dictProgressText">1/20</span>
+        </div>
+        <div class="dictation-word-display">
+          <button class="btn-play" id="btnPlayWord" style="font-size:48px">🔊</button>
+          <p style="font-size:14px;color:var(--text-secondary)">点击播放，输入听到的单词</p>
+        </div>
+        <input type="text" class="dictation-input" id="dictInput" placeholder="输入单词" autocomplete="off" autocapitalize="off">
+        <button class="btn-primary" id="btnSubmitDict" style="width:100%">提交</button>
+        <div class="dict-feedback" id="dictFeedback"></div>
+      </div>
+
+      <!-- Step 3: Results -->
+      <div id="dictStepResult" style="display:none">
+        <div class="result-summary" id="resultSummary"></div>
+        <div class="result-lists">
+          <div class="result-correct" id="resultCorrect"></div>
+          <div class="result-wrong" id="resultWrong"></div>
+        </div>
+        <button class="btn-primary" id="btnReviewWrong" style="width:100%">📖 学习错题后继续</button>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div id="dictStepSuccess" style="display:none">
+        <div class="success-display">
+          <div style="font-size:64px"></div>
+          <h2>打怪成功！</h2>
+          <p id="successDetail"></p>
+        </div>
+        <button class="btn-primary" id="btnFinishDict" style="width:100%">✅ 完成任务</button>
       </div>
     </section>
 
