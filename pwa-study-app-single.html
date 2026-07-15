@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="学习助手">
+  <meta name="theme-color" content="#4f46e5">
+  <title>学习小助手</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+/* ===== Reset & Base ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-dark: #3730a3;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --nav-height: 64px;
+  --header-height: 60px;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== Header ===== */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--primary);
+  color: white;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 16px;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.points-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.points-icon {
+  font-size: 16px;
+}
+
+/* ===== Main Content ===== */
+.app-main {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: var(--nav-height);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-content {
+  display: none;
+  padding: 16px;
+  max-width: 768px;
+  margin: 0 auto;
+  min-height: 100%;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.btn-add {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+
+.btn-add:active {
+  transform: scale(0.9);
+}
+
+/* ===== Task List ===== */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-item {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: transform 0.2s, opacity 0.3s;
+}
+
+.task-item:active {
+  transform: scale(0.98);
+}
+
+.task-item.completed {
+  opacity: 0.6;
+}
+
+.task-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s;
+}
+
+.task-checkbox.checked {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+  font-size: 14px;
+}
+
+.task-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.task-item.completed .task-title {
+  text-decoration: line-through;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.task-subject {
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.task-points {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.task-type-icon {
+  font-size: 14px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-task-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-task-action:active {
+  background: #e2e8f0;
+}
+
+.btn-task-action.delete {
+  color: var(--danger);
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-hint {
+  font-size: 13px;
+  margin-top: 8px;
+  opacity: 0.7;
+}
+
+/* ===== Reading Panel ===== */
+.reading-panel, .dictation-panel {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.textbook-selector {
+  margin-bottom: 16px;
+}
+
+.textbook-selector label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.textbook-selector select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: white;
+  color: var(--text);
+  -webkit-appearance: none;
+}
+
+.reading-content {
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  min-height: 120px;
+  font-size: 16px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.placeholder-text {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 20px;
+}
+
+.reading-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-record {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 30px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: var(--shadow);
+}
+
+.btn-record.recording {
+  background: var(--danger);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.record-icon {
+  font-size: 20px;
+}
+
+.record-status {
+  font-size: 14px;
+  color: var(--text-secondary);
+  min-height: 20px;
+}
+
+/* ===== Dictation Panel ===== */
+.dictation-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn-start-dictation, .btn-stop-dictation {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-start-dictation {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-stop-dictation {
+  background: var(--danger);
+  color: white;
+}
+
+.current-word {
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.current-word .word-display {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 2px;
+}
+
+.current-word .word-hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.answer-input {
+  display: flex;
+  gap: 8px;
+}
+
+.answer-input input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.answer-input input:focus {
+  border-color: var(--primary);
+}
+
+.btn-submit-answer {
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--success);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dictation-result {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  display: none;
+}
+
+.dictation-result.show {
+  display: block;
+}
+
+.dictation-result.correct {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.dictation-result.wrong {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* ===== Points ===== */
+.points-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.points-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.points-card.total {
+  border-left: 4px solid var(--warning);
+}
+
+.points-card.today {
+  border-left: 4px solid var(--primary);
+}
+
+.points-card-icon {
+  font-size: 32px;
+}
+
+.points-card-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.points-card-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.points-history h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-item-info {
+  flex: 1;
+}
+
+.history-item-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.history-item-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.history-item-points {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* ===== Bottom Nav ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 8px 0;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-icon {
+  font-size: 22px;
+}
+
+.nav-label {
+  font-weight: 500;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius) var(--radius) 0 0;
+  width: 100%;
+  max-width: 768px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-cancel, .btn-save {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+.btn-save {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-cancel:active, .btn-save:active {
+  opacity: 0.8;
+}
+
+/* ===== Form ===== */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: white;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.type-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.type-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.type-option input {
+  display: none;
+}
+
+.type-option:has(input:checked) {
+  border-color: var(--primary);
+  background: #eef2ff;
+  color: var(--primary);
+}
+
+/* ===== Photo ===== */
+.photo-area {
+  text-align: center;
+}
+
+.photo-placeholder {
+  padding: 40px 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.photo-placeholder:active {
+  border-color: var(--primary);
+}
+
+.photo-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+#photoPreview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--text);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== Responsive ===== */
+@media (min-width: 768px) {
+  .app-main {
+    padding-bottom: 20px;
+  }
+
+  .modal {
+    border-radius: var(--radius);
+    margin: auto;
+    max-height: 80vh;
+  }
+
+  .modal-overlay {
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-header, .header-content, .tab-content, .modal {
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .bottom-nav {
+    max-width: 900px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+}
+
+/* ===== iPad Safe Area ===== */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-header {
+    padding-top: env(safe-area-inset-top);
+    height: calc(var(--header-height) + env(safe-area-inset-top));
+  }
+
+  .app-main {
+    top: calc(var(--header-height) + env(safe-area-inset-top));
+  }
+}
+
+</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <h1 class="app-title"> 学习小助手</h1>
+      <div class="points-badge" id="pointsBadge">
+        <span class="points-icon">⭐</span>
+        <span class="points-value" id="totalPoints">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- Tab: Tasks -->
+    <section class="tab-content active" id="tabTasks">
+      <div class="section-header">
+        <h2>📋 今日任务</h2>
+        <button class="btn-add" id="btnAddTask" title="添加任务">＋</button>
+      </div>
+      <div class="task-list" id="taskList">
+        <div class="empty-state" id="emptyTasks">
+          <div class="empty-icon">📝</div>
+          <p>今天还没有任务哦</p>
+          <p class="empty-hint">点击右上角 ＋ 添加任务</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Reading -->
+    <section class="tab-content" id="tabReading">
+      <div class="section-header">
+        <h2>🎤 朗读打卡</h2>
+      </div>
+      <div class="reading-panel">
+        <div class="textbook-selector">
+          <label>选择课文：</label>
+          <select id="readingSelect">
+            <option value="">-- 选择课文 --</option>
+          </select>
+        </div>
+        <div class="reading-content" id="readingContent">
+          <p class="placeholder-text">请先选择一篇课文</p>
+        </div>
+        <div class="reading-controls">
+          <button class="btn-record" id="btnRecord">
+            <span class="record-icon">🎙️</span>
+            <span class="record-text">开始录音</span>
+          </button>
+          <div class="record-status" id="recordStatus"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Dictation -->
+    <section class="tab-content" id="tabDictation">
+      <div class="section-header">
+        <h2>🔤 英语听写</h2>
+      </div>
+      <div class="dictation-panel">
+        <div class="textbook-selector">
+          <label>选择单元：</label>
+          <select id="dictationSelect">
+            <option value="">-- 选择单元 --</option>
+          </select>
+        </div>
+        <div class="dictation-controls">
+          <button class="btn-start-dictation" id="btnStartDictation">
+            <span>🔊</span> 开始听写
+          </button>
+          <button class="btn-stop-dictation" id="btnStopDictation" style="display:none">
+            <span>️</span> 结束听写
+          </button>
+        </div>
+        <div class="dictation-area" id="dictationArea">
+          <div class="current-word" id="currentWord">
+            <p class="placeholder-text">选择单元后点击开始听写</p>
+          </div>
+          <div class="answer-input" id="answerInput" style="display:none">
+            <input type="text" id="wordAnswer" placeholder="输入你听到的单词" autocomplete="off">
+            <button class="btn-submit-answer" id="btnSubmitAnswer">确认</button>
+          </div>
+        </div>
+        <div class="dictation-result" id="dictationResult"></div>
+      </div>
+    </section>
+
+    <!-- Tab: Points -->
+    <section class="tab-content" id="tabPoints">
+      <div class="section-header">
+        <h2>🏆 积分中心</h2>
+      </div>
+      <div class="points-summary">
+        <div class="points-card total">
+          <div class="points-card-icon">🌟</div>
+          <div class="points-card-info">
+            <div class="points-card-label">总积分</div>
+            <div class="points-card-value" id="summaryTotal">0</div>
+          </div>
+        </div>
+        <div class="points-card today">
+          <div class="points-card-icon">📅</div>
+          <div class="points-card-info">
+            <div class="points-card-label">今日积分</div>
+            <div class="points-card-value" id="summaryToday">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="points-history">
+        <h3>📋 积分记录</h3>
+        <div class="history-list" id="pointsHistory">
+          <div class="empty-state">
+            <p>还没有积分记录</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="tabTasks">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">任务</span>
+    </button>
+    <button class="nav-item" data-tab="tabReading">
+      <span class="nav-icon">🎤</span>
+      <span class="nav-label">朗读</span>
+    </button>
+    <button class="nav-item" data-tab="tabDictation">
+      <span class="nav-icon">🔤</span>
+      <span class="nav-label">听写</span>
+    </button>
+    <button class="nav-item" data-tab="tabPoints">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">积分</span>
+    </button>
+  </nav>
+
+  <!-- Add Task Modal -->
+  <div class="modal-overlay" id="addTaskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3> 添加任务</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>任务名称</label>
+          <input type="text" id="taskTitle" placeholder="例如：完成数学作业第三章">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>科目</label>
+            <select id="taskSubject">
+              <option value="语文">语文</option>
+              <option value="数学">数学</option>
+              <option value="英语">英语</option>
+              <option value="物理">物理</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>积分</label>
+            <input type="number" id="taskPoints" value="5" min="1" max="50">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>任务类型</label>
+          <div class="type-selector">
+            <label class="type-option">
+              <input type="radio" name="taskType" value="normal" checked>
+              <span>📝 普通</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="taskType" value="reading">
+              <span>🎤 朗读</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="taskType" value="dictation">
+              <span>🔤 听写</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group" id="textbookSelectorGroup" style="display:none">
+          <label>选择教材内容</label>
+          <select id="taskTextbook">
+            <option value="">-- 手动输入 --</option>
+          </select>
+        </div>
+        <div class="form-group" id="wordListGroup" style="display:none">
+          <label>单词列表（JSON 格式）</label>
+          <textarea id="taskWordList" rows="3" placeholder='["apple", "banana", "orange"]'></textarea>
+        </div>
+        <div class="form-group" id="readingContentGroup" style="display:none">
+          <label>课文内容</label>
+          <textarea id="taskReadingContent" rows="4" placeholder="粘贴课文内容..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="taskDate">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancelTask">取消</button>
+        <button class="btn-save" id="btnSaveTask">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo Upload Modal -->
+  <div class="modal-overlay" id="photoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>📸 拍照提交</h3>
+        <button class="modal-close" id="closePhotoModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="photo-area">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+          <div class="photo-placeholder" id="photoPlaceholder">
+            <span class="photo-icon"></span>
+            <p>点击拍照或选择照片</p>
+          </div>
+          <img id="photoPreview" style="display:none" alt="照片预览">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="btnCancelPhoto">取消</button>
+        <button class="btn-save" id="btnConfirmPhoto">确认完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+// ===== 学习助手 PWA - 核心逻辑 =====
+
+// ===== 数据存储 =====
+const Store = {
+  get(key, defaultValue = null) {
+    try {
+      const data = localStorage.getItem('study_app_' + key);
+      return data ? JSON.parse(data) : defaultValue;
+    } catch { return defaultValue; }
+  },
+  set(key, value) {
+    localStorage.setItem('study_app_' + key, JSON.stringify(value));
+  },
+  getTasks() { return this.get('tasks', []); },
+  saveTasks(tasks) { this.set('tasks', tasks); },
+  getPoints() { return this.get('points', []); },
+  savePoints(points) { this.set('points', points); },
+  getPhotos() { return this.get('photos', {}); },
+  savePhotos(photos) { this.set('photos', photos); },
+};
+
+// ===== 工具函数 =====
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (dateStr === today.toISOString().split('T')[0]) return '今天';
+  if (dateStr === tomorrow.toISOString().split('T')[0]) return '明天';
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function parseRelativeDate(dateStr) {
+  if (!dateStr) return getTodayStr();
+  const today = new Date();
+  const lower = dateStr.toLowerCase().trim();
+
+  if (lower === '今天' || lower === 'today') return today.toISOString().split('T')[0];
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (lower === '明天' || lower === 'tomorrow') return tomorrow.toISOString().split('T')[0];
+
+  const dayAfter = new Date(today);
+  dayAfter.setDate(dayAfter.getDate() + 2);
+  if (lower === '后天') return dayAfter.toISOString().split('T')[0];
+
+  // Try parsing as date
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+
+  return getTodayStr();
+}
+
+// ===== 教材数据 =====
+const TEXTBOOK_DATA = {
+  english: {
+    '译林版': {
+      '七年级上': {
+        'Unit 1 This is me!': {
+          words: [
+            { word: 'master', phonetic: '/ˈmɑːstə(r)/', meaning: '主人；大师' },
+            { word: 'grade', phonetic: '/ɡreɪd/', meaning: '年级' },
+            { word: 'student', phonetic: '/ˈstjuːdnt/', meaning: '学生' },
+            { word: 'reading', phonetic: '/ˈriːdɪ/', meaning: '阅读' },
+            { word: 'classmate', phonetic: '/ˈklɑːsmeɪt/', meaning: '同班同学' },
+            { word: 'after', phonetic: '/ˈɑːftə(r)/', meaning: '在……之后' },
+            { word: 'slim', phonetic: '/slɪm/', meaning: '苗条的' },
+            { word: 'over', phonetic: '/ˈəʊvə(r)/', meaning: '超过；在……上方' },
+            { word: 'walking', phonetic: '/ˈwɔːkɪ/', meaning: '步行' },
+            { word: 'really', phonetic: '/ˈriːəli/', meaning: '的确；确实' },
+          ]
+        },
+        'Unit 2 Let\'s play sports!': {
+          words: [
+            { word: 'sports', phonetic: '/spɔːts/', meaning: '运动' },
+            { word: 'really', phonetic: '/ˈriːəli/', meaning: '的确；确实' },
+            { word: 'bowl', phonetic: '/bəʊl/', meaning: '碗' },
+            { word: 'time', phonetic: '/taɪm/', meaning: '次；回' },
+            { word: 'tennis', phonetic: '/ˈtenɪs/', meaning: '网球' },
+            { word: 'volleyball', phonetic: '/ˈvɒlibɔːl/', meaning: '排球' },
+            { word: 'enjoy', phonetic: '/ɪnˈdʒɔɪ/', meaning: '享受……的乐趣' },
+            { word: 'club', phonetic: '/klʌb/', meaning: '俱乐部' },
+            { word: 'free', phonetic: '/friː/', meaning: '空闲的' },
+            { word: 'dream', phonetic: '/driːm/', meaning: '梦想' },
+          ]
+        },
+        'Unit 3 Welcome to our school!': {
+          words: [
+            { word: 'which', phonetic: '/wɪtʃ/', meaning: '哪一个' },
+            { word: 'building', phonetic: '/ˈbɪldŋ/', meaning: '建筑物' },
+            { word: 'field', phonetic: '/fiːld/', meaning: '场地' },
+            { word: 'library', phonetic: '/ˈlaɪbrəri/', meaning: '图书馆' },
+            { word: 'only', phonetic: '/ˈəʊnli/', meaning: '只；只有' },
+            { word: 'gate', phonetic: '/ɡeɪt/', meaning: '大门' },
+            { word: 'bright', phonetic: '/braɪt/', meaning: '明亮的' },
+            { word: 'modern', phonetic: '/ˈmɒdn/', meaning: '现代的' },
+            { word: 'hall', phonetic: '/hɔːl/', meaning: '大厅' },
+            { word: 'diary', phonetic: '/ˈdaɪəri/', meaning: '日记' },
+          ]
+        },
+        'Unit 4 My day': {
+          words: [
+            { word: 'wake', phonetic: '/weɪk/', meaning: '醒；唤醒' },
+            { word: 'morning', phonetic: '/ˈmɔːnɪŋ/', meaning: '早晨' },
+            { word: 'hill', phonetic: '/hɪl/', meaning: '小山' },
+            { word: ' seldom', phonetic: '/ˈseldəm/', meaning: '很少' },
+            { word: 'out', phonetic: '/aʊt/', meaning: '出来' },
+            { word: 'need', phonetic: '/niːd/', meaning: '需要' },
+            { word: 'rest', phonetic: '/rest/', meaning: '休息' },
+            { word: 'once', phonetic: '/wʌns/', meaning: '一次' },
+            { word: 'activity', phonetic: '/ækˈtɪvəti/', meaning: '活动' },
+            { word: 'homework', phonetic: '/həʊmwɜk/', meaning: '家庭作业' },
+          ]
+        },
+      },
+      '七年级下': {
+        'Unit 1 Dream homes': {
+          words: [
+            { word: 'next', phonetic: '/nekst/', meaning: '下一个' },
+            { word: 'town', phonetic: '/taʊn/', meaning: '城镇' },
+            { word: 'capital', phonetic: '/ˈkæpɪtl/', meaning: '首都' },
+            { word: 'balcony', phonetic: '/ˈbælkəni/', meaning: '阳台' },
+            { word: 'share', phonetic: '/ʃeə(r)/', meaning: '分享' },
+            { word: 'bedroom', phonetic: '/bedruːm/', meaning: '卧室' },
+            { word: 'own', phonetic: '/əʊn/', meaning: '自己的' },
+            { word: 'bathroom', phonetic: '/ˈbɑθruːm/', meaning: '浴室' },
+            { word: 'kitchen', phonetic: '/ˈkɪtʃɪn/', meaning: '厨房' },
+            { word: 'garden', phonetic: '/ˈɡɑːdn/', meaning: '花园' },
+          ]
+        },
+        'Unit 2 Neighbours': {
+          words: [
+            { word: 'neighbour', phonetic: '/ˈneɪbə(r)/', meaning: '邻居' },
+            { word: 'welcome', phonetic: '/ˈwelkəm/', meaning: '欢迎' },
+            { word: 'skill', phonetic: '/skɪl/', meaning: '技能' },
+            { word: 'helpful', phonetic: '/ˈhelpfl/', meaning: '有帮助的' },
+            { word: 'community', phonetic: '/kəˈmjuːnəti/', meaning: '社区' },
+            { word: 'problem', phonetic: '/ˈprɒbləm/', meaning: '问题' },
+            { word: 'something', phonetic: '/ˈsʌmθŋ/', meaning: '某事' },
+            { word: 'engineer', phonetic: '/ˌendʒɪˈnɪə(r)/', meaning: '工程师' },
+            { word: 'check', phonetic: '/tʃek/', meaning: '检查' },
+            { word: 'lucky', phonetic: '/ˈlʌki/', meaning: '幸运的' },
+          ]
+        },
+      }
+    }
+  },
+  chinese: {
+    '人教版': {
+      '七年级上': {
+        '《春》朱自清': {
+          reading: '盼望着，盼望着，东风来了，春天的脚步近了。\n\n一切都像刚睡醒的样子，欣欣然张开了眼。山朗润起来了，水涨起来了，太阳的脸红起来了。\n\n小草偷偷地从土里钻出来，嫩嫩的，绿绿的。园子里，田野里，瞧去，一大片一大片满是的。坐着，躺着，打两个滚，踢几脚球，赛几趟跑，捉几回迷藏。风轻悄悄的，草软绵绵的。\n\n桃树、杏树、梨树，你不让我，我不让你，都开满了花赶趟儿。红的像火，粉的像霞，白的像雪。花里带着甜味儿；闭了眼，树上仿佛已经满是桃儿、杏儿、梨儿。花下成千成百的蜜蜂嗡嗡地闹着，大小的蝴蝶飞来飞去。野花遍地是：杂样儿，有名字的，没名字的，散在草丛里，像眼睛，像星星，还眨呀眨的。'
+        },
+        '《济南的冬天》老舍': {
+          reading: '对于一个在北平住惯的人，像我，冬天要是不刮风，便觉得是奇迹；济南的冬天是没有风声的。对于一个刚由伦敦回来的人，像我，冬天要能看得见日光，便觉得是怪事；济南的冬天是响晴的。自然，在热带的地方，日光是永远那么毒，响亮的天气，反有点叫人害怕。可是，在北中国的冬天，而能有温晴的天气，济南真得算个宝地。\n\n设若单单是有阳光，那也算不了出奇。请闭上眼睛想：一个老城，有山有水，全在天底下晒着阳光，暖和安适地睡着，只等春风来把它们唤醒，这是不是个理想的境界？'
+        },
+        '《背影》朱自清': {
+          reading: '我与父亲不相见已二年余了，我最不能忘记的是他的背影。\n\n那年冬天，祖母死了，父亲的差使也交卸了，正是祸不单行的日子。我从北京到徐州，打算跟着父亲奔丧回家。到徐州见着父亲，看见满院狼藉的东西，又想起祖母，不禁簌簌地流下眼泪。父亲说："事已如此，不必难过，好在天无绝人之路！"\n\n回家变卖典质，父亲还了亏空；又借钱办了丧事。这些日子，家中光景很是惨淡，一半为了丧事，一半为了父亲赋闲。丧事完毕，父亲要到南京谋事，我也要回北京念书，我们便同行。'
+        },
+      },
+      '七年级下': {
+        '《从百草园到三味书屋》鲁迅': {
+          reading: '我家的后面有一个很大的园，相传叫作百草园。现在是早已并屋子一起卖给朱文公的子孙了，连那最末次的相见也已经隔了七八年，其中似乎确凿只有一些野草；但那时却是我的乐园。\n\n不必说碧绿的菜畦，光滑的石井栏，高大的皂荚树，紫红的桑椹；也不必说鸣蝉在树叶里长吟，肥胖的黄蜂伏在菜花上，轻捷的叫天子（云雀）忽然从草间直窜向云霄里去了。单是周围的短短的泥墙根一带，就有无限趣味。'
+        },
+        '《木兰诗》': {
+          reading: '唧唧复唧唧，木兰当户织。不闻机声，唯闻女叹息。\n\n问女何所思，问女何所忆。女亦无所思，女亦无所忆。昨夜见军帖，可汗大点兵，军书十二卷，卷卷有爷名。阿爷无大儿，木兰无长兄，愿为市鞍马，从此替爷征。\n\n东市买骏马，西市买鞍鞯，南市买辔头，北市买长鞭。旦辞爷娘去，暮宿黄河边，不闻爷娘唤女声，但闻黄河流水鸣溅溅。旦辞黄河去，暮至黑山头，不闻爷娘唤女声，但闻燕山胡骑鸣啾啾。'
+        },
+      }
+    }
+  },
+  classical: {
+    '必背小古文': {
+      '《陋室铭》刘禹锡': {
+        reading: '山不在高，有仙则名。水不在深，有龙则灵。斯是陋室，惟吾德馨。苔痕上阶绿，草色入帘青。谈笑有鸿儒，往来无白丁。可以调素琴，阅金经。无丝竹之乱耳，无案牍之劳形。南阳诸葛庐，西蜀子云亭。孔子云：何陋之有？'
+      },
+      '《爱莲说》周敦颐': {
+        reading: '水陆草木之花，可爱者甚蕃。晋陶渊明独爱菊。自李唐来，世人甚爱牡丹。予独爱莲之出淤泥而不染，濯清涟而不妖，中通外直，不蔓不枝，香远益清，亭亭净植，可远观而不可亵玩焉。\n\n予谓菊，花之隐逸者也；牡丹，花之富贵者也；莲，花之君子者也。噫！菊之爱，陶后鲜有闻。莲之爱，同予者何人？牡丹之爱，宜乎众矣！'
+      },
+      '《记承天寺夜游》苏轼': {
+        reading: '元丰六年十月十二日夜，解衣欲睡，月色入户，欣然起行。念无与为乐者，遂至承天寺寻张怀民。怀民亦未寝，相与步于中庭。庭下如积水空明，水中藻、荇交横，盖竹柏影也。何夜无月？何处无竹柏？但少闲人如吾两人者耳。'
+      },
+      '《马说》韩愈': {
+        reading: '世有伯乐，然后有千里马。千里马常有，而伯乐不常有。故虽有名马，祗辱于奴隶人之手，骈死于槽枥之间，不以千里称也。\n\n马之千里者，一食或尽粟一石。食马者不知其能千里而食也。是马也，虽有千里之能，食不饱，力不足，才美不外见，且欲与常马等不可得，安求其能千里也？\n\n策之不以其道，食之不能尽其材，鸣之而不能通其意，执策而临之，曰："天下无马！"呜呼！其真无马邪？其真不知马也！'
+      },
+    },
+    '必背诗歌': {
+      '《观沧海》曹操': {
+        reading: '东临碣石，以观沧海。\n水何澹，山岛竦峙。\n树木丛生，百草丰茂。\n秋风萧瑟，洪波涌起。\n日月之行，若出其中；\n星汉灿烂，若出其里。\n幸甚至哉，歌以咏志。'
+      },
+      '《次北固山下》王湾': {
+        reading: '客路青山外，行舟绿水前。\n潮平两岸阔，风正一帆悬。\n海日生残夜，江春入旧年。\n乡书何处达？归雁洛阳边。'
+      },
+      '《天净沙·秋思》马致远': {
+        reading: '枯藤老树昏鸦，\n小桥流水人家，\n古道西风瘦马。\n夕阳西下，\n断肠人在天涯。'
+      },
+      '《闻王昌龄左迁龙标遥有此寄》李白': {
+        reading: '杨花落尽子规啼，\n闻道龙标过五溪。\n我寄愁心与明月，\n随君直到夜郎西。'
+      },
+      '《夜雨寄北》李商隐': {
+        reading: '君问归期未有期，\n巴山夜雨涨秋池。\n何当共剪西窗烛，\n却话巴山夜雨时。'
+      },
+    }
+  }
+};
+
+// ===== 应用状态 =====
+let currentTab = 'tasks';
+let recording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let dictationWords = [];
+let currentWordIndex = 0;
+let dictationCorrect = 0;
+let dictationTotal = 0;
+
+// ===== 初始化 =====
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  renderTasks();
+  renderPoints();
+  initTextbookSelectors();
+  initPhotoUpload();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  // PWA install prompt
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) {
+      installBtn.style.display = 'block';
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        }
+      });
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) installBtn.style.display = 'none';
+  });
+});
+
+// ===== Tab 切换 =====
+function initTabs() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const tab = item.dataset.tab;
+      switchTab(tab);
+    });
+  });
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active');
+
+  if (tab === 'points') renderPoints();
+}
+
+// ===== 任务管理 =====
+function renderTasks() {
+  const tasks = Store.getTasks();
+  const today = getTodayStr();
+  const todayTasks = tasks.filter(t => t.date === today);
+
+  const container = document.getElementById('taskList');
+
+  if (todayTasks.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>今天还没有任务哦</p>
+        <p class="empty-hint">点击 + 添加任务开始学习吧</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = todayTasks.map(task => `
+    <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+      <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask('${task.id}')">
+        ${task.completed ? '✓' : ''}
+      </div>
+      <div class="task-info">
+        <div class="task-title">${escapeHtml(task.title)}</div>
+        <div class="task-meta">
+          <span class="task-subject">${escapeHtml(task.subject)}</span>
+          <span class="task-points">⭐ ${task.points}积分</span>
+          ${task.type === 'reading' ? '<span class="task-type-icon"></span>' : ''}
+          ${task.type === 'dictation' ? '<span class="task-type-icon">🔤</span>' : ''}
+        </div>
+      </div>
+      <div class="task-actions">
+        ${!task.completed ? `<button class="btn-task-action" onclick="openTaskAction('${task.id}')" title="完成">📝</button>` : ''}
+        <button class="btn-task-action delete" onclick="deleteTask('${task.id}')" title="删除">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleTask(taskId) {
+  const tasks = Store.getTasks();
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (task.type === 'reading' || task.type === 'dictation') {
+    // 朗读和听写任务需要通过专门流程完成
+    if (task.type === 'reading') {
+      switchTab('reading');
+      loadReadingTask(task);
+    } else {
+      switchTab('dictation');
+      loadDictationTask(task);
+    }
+    return;
+  }
+
+  task.completed = !task.completed;
+  if (task.completed) {
+    task.completedAt = new Date().toISOString();
+    addPoints(task.points, `完成任务: ${task.title}`, task.id);
+  } else {
+    removePoints(task.id);
+  }
+
+  Store.saveTasks(tasks);
+  renderTasks();
+  showToast(task.completed ? `✅ 完成！+${task.points}积分` : '已取消完成');
+}
+
+function openTaskAction(taskId) {
+  const tasks = Store.getTasks();
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (task.type === 'reading') {
+    switchTab('reading');
+    loadReadingTask(task);
+  } else if (task.type === 'dictation') {
+    switchTab('dictation');
+    loadDictationTask(task);
+  } else {
+    // 普通任务 - 拍照提交
+    openPhotoModal(taskId);
+  }
+}
+
+function deleteTask(taskId) {
+  if (!confirm('确定删除这个任务吗？')) return;
+
+  let tasks = Store.getTasks();
+  tasks = tasks.filter(t => t.id !== taskId);
+  Store.saveTasks(tasks);
+  removePoints(taskId);
+  renderTasks();
+  showToast('任务已删除');
+}
+
+// ===== 添加任务 =====
+function openAddTaskModal() {
+  document.getElementById('addTaskModal').classList.add('show');
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskSubject').value = '数学';
+  document.getElementById('taskPoints').value = '5';
+  document.getElementById('taskDate').value = getTodayStr();
+  document.getElementById('taskTypeNormal').checked = true;
+  updateTypeFields();
+}
+
+function closeAddTaskModal() {
+  document.getElementById('addTaskModal').classList.remove('show');
+}
+
+function updateTypeFields() {
+  const isNormal = document.getElementById('taskTypeNormal').checked;
+  document.getElementById('normalFields').style.display = isNormal ? 'block' : 'none';
+  document.getElementById('textbookSection').style.display = isNormal ? 'none' : 'block';
+}
+
+function addTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) { showToast('请输入任务名称'); return; }
+
+  const type = document.getElementById('taskTypeNormal').checked ? 'normal' :
+               document.getElementById('taskTypeReading').checked ? 'reading' : 'dictation';
+
+  const task = {
+    id: generateId(),
+    title,
+    subject: document.getElementById('taskSubject').value,
+    type,
+    points: parseInt(document.getElementById('taskPoints').value) || 5,
+    date: parseRelativeDate(document.getElementById('taskDate').value),
+    completed: false,
+    completedAt: null,
+    photoKey: null,
+    wordList: null,
+    readingContent: null,
+    createdAt: new Date().toISOString(),
+  };
+
+  // 如果是朗读或听写任务，获取教材内容
+  if (type !== 'normal') {
+    const content = getSelectedTextbookContent();
+    if (type === 'reading') {
+      task.readingContent = content;
+    } else {
+      task.wordList = getSelectedTextbookWords();
+    }
+  }
+
+  const tasks = Store.getTasks();
+  tasks.push(task);
+  Store.saveTasks(tasks);
+
+  closeAddTaskModal();
+  renderTasks();
+  showToast('✅ 任务已添加！');
+}
+
+// ===== 教材选择器 =====
+function initTextbookSelectors() {
+  const subjectSelect = document.getElementById('textbookSubject');
+  subjectSelect.addEventListener('change', updateTextbookVersions);
+  document.getElementById('textbookVersion').addEventListener('change', updateTextbookUnits);
+  document.getElementById('btnAutoFill').addEventListener('click', autoFillContent);
+  updateTextbookVersions();
+}
+
+function updateTextbookVersions() {
+  const subject = document.getElementById('textbookSubject').value;
+  const versionSelect = document.getElementById('textbookVersion');
+  const unitSelect = document.getElementById('textbookUnit');
+
+  versionSelect.innerHTML = '';
+  unitSelect.innerHTML = '<option value="">请选择单元</option>';
+
+  let versions = [];
+  if (subject === '英语') versions = Object.keys(TEXTBOOK_DATA.english);
+  else if (subject === '语文') versions = Object.keys(TEXTBOOK_DATA.chinese);
+  else if (subject === '古文诗歌') versions = Object.keys(TEXTBOOK_DATA.classical);
+
+  versions.forEach(v => {
+    versionSelect.innerHTML += `<option value="${v}">${v}</option>`;
+  });
+
+  if (versions.length > 0) updateTextbookUnits();
+}
+
+function updateTextbookUnits() {
+  const subject = document.getElementById('textbookSubject').value;
+  const version = document.getElementById('textbookVersion').value;
+  const unitSelect = document.getElementById('textbookUnit');
+
+  unitSelect.innerHTML = '<option value="">请选择单元</option>';
+
+  let data = null;
+  if (subject === '英语' && TEXTBOOK_DATA.english[version]) data = TEXTBOOK_DATA.english[version];
+  else if (subject === '语文' && TEXTBOOK_DATA.chinese[version]) data = TEXTBOOK_DATA.chinese[version];
+  else if (subject === '古文诗歌' && TEXTBOOK_DATA.classical[version]) data = TEXTBOOK_DATA.classical[version];
+
+  if (data) {
+    Object.keys(data).forEach(grade => {
+      Object.keys(data[grade]).forEach(unit => {
+        unitSelect.innerHTML += `<option value="${grade}|${unit}">${grade} - ${unit}</option>`;
+      });
+    });
+  }
+}
+
+function getSelectedTextbookContent() {
+  const subject = document.getElementById('textbookSubject').value;
+  const version = document.getElementById('textbookVersion').value;
+  const unitValue = document.getElementById('textbookUnit').value;
+
+  if (!unitValue) return null;
+
+  const [grade, unit] = unitValue.split('|');
+  let data = null;
+
+  if (subject === '英语') data = TEXTBOOK_DATA.english[version]?.[grade]?.[unit];
+  else if (subject === '语文') data = TEXTBOOK_DATA.chinese[version]?.[grade]?.[unit];
+  else if (subject === '古文诗歌') data = TEXTBOOK_DATA.classical[version]?.[unit];
+
+  if (!data) return null;
+  return data.reading || null;
+}
+
+function getSelectedTextbookWords() {
+  const subject = document.getElementById('textbookSubject').value;
+  const version = document.getElementById('textbookVersion').value;
+  const unitValue = document.getElementById('textbookUnit').value;
+
+  if (!unitValue || subject !== '英语') return null;
+
+  const [grade, unit] = unitValue.split('|');
+  const data = TEXTBOOK_DATA.english[version]?.[grade]?.[unit];
+  return data?.words || null;
+}
+
+function autoFillContent() {
+  const subject = document.getElementById('textbookSubject').value;
+  const type = document.getElementById('taskTypeReading').checked ? 'reading' : 'dictation';
+
+  if (type === 'reading') {
+    const content = getSelectedTextbookContent();
+    if (content) {
+      document.getElementById('manualContent').value = content;
+      showToast('✅ 课文内容已自动填充');
+    } else {
+      showToast('请先选择教材单元');
+    }
+  } else {
+    const words = getSelectedTextbookWords();
+    if (words) {
+      const wordList = words.map(w => w.word).join(',');
+      document.getElementById('manualWordList').value = wordList;
+      showToast(`✅ 已填充 ${words.length} 个单词`);
+    } else {
+      showToast('请先选择英语教材单元');
+    }
+  }
+}
+
+// ===== 朗读打卡 =====
+function loadReadingTask(task) {
+  const content = task.readingContent || '请在添加任务时填入课文内容';
+  document.getElementById('readingText').textContent = content;
+  document.getElementById('readingStatus').textContent = '';
+  document.getElementById('btnRecord').classList.remove('recording');
+  document.getElementById('btnRecord').innerHTML = '<span class="record-icon"></span> 开始朗读';
+  recording = false;
+}
+
+async function toggleRecording() {
+  if (recording) {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      stream.getTracks().forEach(t => t.stop());
+      await processRecording(audioBlob);
+    };
+
+    mediaRecorder.start();
+    recording = true;
+    document.getElementById('btnRecord').classList.add('recording');
+    document.getElementById('btnRecord').innerHTML = '<span class="record-icon"></span> 停止录音';
+    document.getElementById('readingStatus').textContent = '🔴 录音中...请朗读课文';
+  } catch (err) {
+    showToast('无法访问麦克风，请检查权限');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  recording = false;
+  document.getElementById('btnRecord').classList.remove('recording');
+  document.getElementById('btnRecord').innerHTML = '<span class="record-icon">🎤</span> 开始朗读';
+  document.getElementById('readingStatus').textContent = '处理中...';
+}
+
+async function processRecording(audioBlob) {
+  // 使用浏览器自带的 SpeechRecognition 进行识别
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    // 降级方案：直接标记完成
+    document.getElementById('readingStatus').textContent = '✅ 录音完成！（浏览器不支持语音识别，已标记完成）';
+    completeReadingTask();
+    return;
+  }
+
+  try {
+    // 将录音转为文字（通过文件读取 + 语音识别）
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    let transcript = '';
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+    };
+
+    recognition.onend = () => {
+      const readingText = document.getElementById('readingText').textContent;
+      const completeness = calculateCompleteness(transcript, readingText);
+
+      if (completeness >= 60) {
+        document.getElementById('readingStatus').textContent = `✅ 朗读完成！完整度 ${completeness}%，已发放积分`;
+        completeReadingTask();
+      } else {
+        document.getElementById('readingStatus').textContent = `⚠️ 完整度 ${completeness}%，建议再读一遍（需达到60%以上）`;
+      }
+    };
+
+    recognition.onerror = () => {
+      document.getElementById('readingStatus').textContent = '⚠️ 语音识别失败，已标记完成';
+      completeReadingTask();
+    };
+
+    recognition.start();
+
+    // 播放录音让用户听到自己读的
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+    audio.onended = () => {
+      recognition.stop();
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    document.getElementById('readingStatus').textContent = '🎧 播放录音中，随后自动识别...';
+  } catch {
+    document.getElementById('readingStatus').textContent = '✅ 录音完成！已标记完成';
+    completeReadingTask();
+  }
+}
+
+function calculateCompleteness(spoken, original) {
+  if (!spoken || !original) return 0;
+
+  // 简化版完整度计算：检查原文中的关键句是否在语音中出现
+  const sentences = original.split(/[。！？\n]/).filter(s => s.trim().length > 5);
+  if (sentences.length === 0) return 100;
+
+  let matched = 0;
+  sentences.forEach(sentence => {
+    const keywords = sentence.trim().substring(0, Math.min(10, sentence.trim().length));
+    if (spoken.includes(keywords)) matched++;
+  });
+
+  return Math.round((matched / sentences.length) * 100);
+}
+
+function completeReadingTask() {
+  const tasks = Store.getTasks();
+  const today = getTodayStr();
+  const task = tasks.find(t => t.date === today && t.type === 'reading' && !t.completed);
+
+  if (task) {
+    task.completed = true;
+    task.completedAt = new Date().toISOString();
+    addPoints(task.points, `朗读完成: ${task.title}`, task.id);
+    Store.saveTasks(tasks);
+    renderTasks();
+  }
+}
+
+// ===== 英语听写 =====
+function loadDictationTask(task) {
+  if (task.wordList && task.wordList.length > 0) {
+    dictationWords = [...task.wordList];
+  } else {
+    // 从手动输入的词库解析
+    const wordListText = document.getElementById('manualWordList')?.value || '';
+    dictationWords = wordListText.split(/[,，\n]/).map(w => w.trim()).filter(w => w);
+  }
+
+  if (dictationWords.length === 0) {
+    dictationWords = ['hello', 'world', 'student', 'teacher', 'school'];
+  }
+
+  currentWordIndex = 0;
+  dictationCorrect = 0;
+  dictationTotal = 0;
+
+  document.getElementById('dictationStatus').textContent = `共 ${dictationWords.length} 个单词，点击开始`;
+  document.getElementById('currentWordDisplay').innerHTML = '<span class="word-hint">点击"开始听写"开始</span>';
+  document.getElementById('answerInput').value = '';
+  document.getElementById('dictationResult').classList.remove('show');
+}
+
+function startDictation() {
+  if (dictationWords.length === 0) {
+    showToast('请先添加听写任务或输入单词');
+    return;
+  }
+  currentWordIndex = 0;
+  dictationCorrect = 0;
+  dictationTotal = 0;
+  speakCurrentWord();
+}
+
+function speakCurrentWord() {
+  if (currentWordIndex >= dictationWords.length) {
+    finishDictation();
+    return;
+  }
+
+  const word = dictationWords[currentWordIndex];
+  document.getElementById('currentWordDisplay').innerHTML = `
+    <div>
+      <div class="word-display">第 ${currentWordIndex + 1}/${dictationWords.length} 个</div>
+      <div class="word-hint">仔细听，然后输入你听到的单词</div>
+    </div>`;
+  document.getElementById('answerInput').value = '';
+  document.getElementById('dictationResult').classList.remove('show');
+  document.getElementById('answerInput').focus();
+
+  // TTS 朗读
+  speakWord(word);
+}
+
+function speakWord(word) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.8;
+    utterance.pitch = 1;
+
+    // 尝试使用英语语音
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice = voices.find(v => v.lang.startsWith('en'));
+    if (enVoice) utterance.voice = enVoice;
+
+    window.speechSynthesis.speak(utterance);
+
+    // 读两遍
+    utterance.onend = () => {
+      setTimeout(() => {
+        const u2 = new SpeechSynthesisUtterance(word);
+        u2.lang = 'en-US';
+        u2.rate = 0.8;
+        if (enVoice) u2.voice = enVoice;
+        window.speechSynthesis.speak(u2);
+      }, 800);
+    };
+  }
+}
+
+function submitAnswer() {
+  const answer = document.getElementById('answerInput').value.trim().toLowerCase();
+  if (!answer) return;
+
+  const correct = dictationWords[currentWordIndex].toLowerCase();
+  dictationTotal++;
+
+  const resultEl = document.getElementById('dictationResult');
+
+  if (answer === correct) {
+    dictationCorrect++;
+    resultEl.className = 'dictation-result show correct';
+    resultEl.textContent = `✅ 正确！"${correct}"`;
+  } else {
+    resultEl.className = 'dictation-result show wrong';
+    resultEl.textContent = `❌ 错误！正确答案是 "${correct}"，你写的是 "${answer}"`;
+  }
+
+  currentWordIndex++;
+  document.getElementById('dictationStatus').textContent =
+    `进度: ${currentWordIndex}/${dictationWords.length} | 正确: ${dictationCorrect}`;
+
+  setTimeout(() => speakCurrentWord(), 2000);
+}
+
+function finishDictation() {
+  const score = dictationTotal > 0 ? Math.round((dictationCorrect / dictationTotal) * 100) : 0;
+
+  document.getElementById('currentWordDisplay').innerHTML = `
+    <div>
+      <div class="word-display">听写完成！</div>
+      <div class="word-hint">正确率: ${score}% (${dictationCorrect}/${dictationTotal})</div>
+    </div>`;
+
+  if (score >= 80) {
+    const tasks = Store.getTasks();
+    const today = getTodayStr();
+    const task = tasks.find(t => t.date === today && t.type === 'dictation' && !t.completed);
+
+    if (task) {
+      task.completed = true;
+      task.completedAt = new Date().toISOString();
+      addPoints(task.points, `听写完成: ${task.title} (${score}分)`, task.id);
+      Store.saveTasks(tasks);
+      renderTasks();
+    }
+
+    document.getElementById('dictationStatus').textContent = `🎉 太棒了！正确率 ${score}%，积分已发放！`;
+  } else {
+    document.getElementById('dictationStatus').textContent = `正确率 ${score}%，需要达到80%才能获得积分，再试一次吧！`;
+  }
+}
+
+// 加载语音列表（某些浏览器需要）
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+}
+
+// ===== 积分系统 =====
+function addPoints(points, reason, taskId) {
+  const pointsList = Store.getPoints();
+  pointsList.push({
+    id: generateId(),
+    taskId,
+    points,
+    reason,
+    date: getTodayStr(),
+    createdAt: new Date().toISOString(),
+  });
+  Store.savePoints(pointsList);
+}
+
+function removePoints(taskId) {
+  let pointsList = Store.getPoints();
+  pointsList = pointsList.filter(p => p.taskId !== taskId);
+  Store.savePoints(pointsList);
+}
+
+function renderPoints() {
+  const pointsList = Store.getPoints();
+  const today = getTodayStr();
+
+  const totalPoints = pointsList.reduce((sum, p) => sum + p.points, 0);
+  const todayPoints = pointsList.filter(p => p.date === today).reduce((sum, p) => sum + p.points, 0);
+
+  document.getElementById('totalPoints').textContent = totalPoints;
+  document.getElementById('todayPoints').textContent = todayPoints;
+
+  const historyContainer = document.getElementById('pointsHistory');
+  const recentPoints = [...pointsList].reverse().slice(0, 20);
+
+  if (recentPoints.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏆</div>
+        <p>还没有积分记录</p>
+        <p class="empty-hint">完成任务就能获得积分哦</p>
+      </div>`;
+    return;
+  }
+
+  historyContainer.innerHTML = `
+    <h3>最近记录</h3>
+    <div class="history-list">
+      ${recentPoints.map(p => `
+        <div class="history-item">
+          <div class="history-item-info">
+            <div class="history-item-title">${escapeHtml(p.reason)}</div>
+            <div class="history-item-date">${formatDate(p.date)}</div>
+          </div>
+          <div class="history-item-points">+${p.points}</div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ===== 拍照功能 =====
+function initPhotoUpload() {
+  const photoInput = document.getElementById('photoInput');
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+
+  if (photoPlaceholder) {
+    photoPlaceholder.addEventListener('click', () => photoInput.click());
+  }
+
+  if (photoInput) {
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const preview = document.getElementById('photoPreview');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+        photoPlaceholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
+let currentPhotoTaskId = null;
+
+function openPhotoModal(taskId) {
+  currentPhotoTaskId = taskId;
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoPlaceholder').style.display = 'block';
+  document.getElementById('photoInput').value = '';
+
+  // 检查是否已有照片
+  const photos = Store.getPhotos();
+  if (photos[taskId]) {
+    document.getElementById('photoPreview').src = photos[taskId];
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+  }
+
+  document.getElementById('photoModal').classList.add('show');
+}
+
+function closePhotoModal() {
+  document.getElementById('photoModal').classList.remove('show');
+}
+
+function submitPhoto() {
+  const preview = document.getElementById('photoPreview');
+  if (preview.style.display === 'none' || !preview.src) {
+    showToast('请先拍照或选择照片');
+    return;
+  }
+
+  // 保存照片
+  const photos = Store.getPhotos();
+  photos[currentPhotoTaskId] = preview.src;
+  Store.savePhotos(photos);
+
+  // 标记任务完成
+  const tasks = Store.getTasks();
+  const task = tasks.find(t => t.id === currentPhotoTaskId);
+  if (task && !task.completed) {
+    task.completed = true;
+    task.completedAt = new Date().toISOString();
+    task.photoKey = 'photo_' + currentPhotoTaskId;
+    addPoints(task.points, `完成任务: ${task.title}`, task.id);
+    Store.saveTasks(tasks);
+    renderTasks();
+  }
+
+  closePhotoModal();
+  showToast('✅ 照片已提交，积分已发放！');
+}
+
+// ===== 工具函数 =====
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// 键盘事件 - 听写输入框回车提交
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && currentTab === 'dictation') {
+    const answerInput = document.getElementById('answerInput');
+    if (document.activeElement === answerInput) {
+      submitAnswer();
+    }
+  }
+});
+
+</script>
+</body>
+</html>
