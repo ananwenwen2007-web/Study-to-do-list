@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Study Todo - 自主学习助手</title>
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-light: #818CF8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --text: #1E293B;
+  --text-secondary: #64748B;
+  --border: #E2E8F0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header h1 { font-size: 1.4rem; font-weight: 700; }
+.header .subtitle { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px 12px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.stat-item { text-align: center; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 68px;
+  z-index: 99;
+  overflow-x: auto;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: none;
+  background: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Content */
+.content { padding: 16px; max-width: 800px; margin: 0 auto; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.card-title { font-size: 1rem; font-weight: 600; }
+.card-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge-regular { background: #DBEAFE; color: #1D4ED8; }
+.badge-reading { background: #D1FAE5; color: #065F46; }
+.badge-dictation { background: #FEF3C7; color: #92400E; }
+.badge-photo { background: #FCE7F3; color: #9D174D; }
+
+.card-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+.card-meta { display: flex; gap: 12px; font-size: 0.8rem; color: var(--text-secondary); }
+.card-points { color: var(--warning); font-weight: 600; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: #4338CA; }
+.btn-success { background: var(--success); color: white; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Forms */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+.form-textarea { min-height: 80px; resize: vertical; }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; }
+
+/* Reading Interface */
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: #FEE2E2;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+.recording-dot {
+  width: 12px; height: 12px;
+  background: var(--danger);
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Dictation Interface */
+.dictation-word {
+  text-align: center;
+  padding: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.dictation-progress {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.dictation-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.dictation-dot.done { background: var(--success); }
+.dictation-dot.current { background: var(--primary); transform: scale(1.3); }
+
+/* Results */
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.result-correct { color: var(--success); }
+.result-wrong { color: var(--danger); }
+
+/* Points Log */
+.log-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.log-points { font-weight: 700; color: var(--success); }
+.log-reason { font-size: 0.85rem; color: var(--text-secondary); }
+.log-time { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* Photo Preview */
+.photo-preview {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+.empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+/* Responsive */
+@media (min-width: 768px) {
+  .content { padding: 24px; }
+  .card { padding: 20px; }
+  .stats-bar { padding: 20px; }
+  .stat-value { font-size: 2rem; }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.toast.show { opacity: 1; }
+
+/* Similarity bar */
+.similarity-bar {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.similarity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 自主学习助手</h1>
+  <div class="subtitle">每天进步一点点</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-value" id="totalPoints">0</div>
+    <div class="stat-label">总积分</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="todayPoints">0</div>
+    <div class="stat-label">今日积分</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="streakDays">0</div>
+    <div class="stat-label">连续打卡</div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('tasks')">📋 任务</button>
+  <button class="tab-btn" onclick="switchTab('reading')">📖 朗读</button>
+  <button class="tab-btn" onclick="switchTab('dictation')">🔤 听写</button>
+  <button class="tab-btn" onclick="switchTab('points')">🏆 积分</button>
+  <button class="tab-btn" onclick="switchTab('manage')">⚙️ 管理</button>
+</div>
+
+<div class="content">
+  <!-- Tasks Tab -->
+  <div id="tab-tasks" class="tab-content active">
+    <div id="taskList"></div>
+  </div>
+
+  <!-- Reading Tab -->
+  <div id="tab-reading" class="tab-content">
+    <div class="card">
+      <div class="card-title">📖 朗读打卡</div>
+      <div class="card-desc">选择朗读任务，录音后自动识别比对</div>
+    </div>
+    <div id="readingTaskList"></div>
+    <div id="readingInterface" style="display:none;">
+      <div class="card">
+        <div class="card-title" id="readingTitle"></div>
+        <div class="card-desc" id="readingText" style="white-space:pre-wrap; background:#F8FAFC; padding:12px; border-radius:8px; margin:8px 0; max-height:200px; overflow-y:auto;"></div>
+        <div id="recordingArea">
+          <button class="btn btn-danger btn-block" id="recordBtn" onclick="toggleRecording()">🎤 开始朗读</button>
+        </div>
+        <div id="recordingIndicator" class="recording-indicator" style="display:none;">
+          <div class="recording-dot"></div>
+          <span>正在录音...</span>
+          <button class="btn btn-sm btn-danger" onclick="stopRecording()">停止</button>
+        </div>
+        <div id="readingResult" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dictation Tab -->
+  <div id="tab-dictation" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔤 英语听写</div>
+      <div class="card-desc">听音频，写出对应的英语单词</div>
+    </div>
+    <div id="dictationTaskList"></div>
+    <div id="dictationInterface" style="display:none;">
+      <div class="card">
+        <div class="card-title">听写进行中</div>
+        <div class="dictation-progress" id="dictationProgress"></div>
+        <div class="dictation-word">
+          <button class="btn btn-primary" id="playAudioBtn" onclick="playCurrentWord()">🔊 播放</button>
+          <div style="margin-top:12px;">
+            <span id="wordHint" style="color:var(--text-secondary); font-size:0.85rem;"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="text" class="form-input" id="dictationInput" placeholder="输入你听到的单词..." autocomplete="off" autocapitalize="off">
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="prevWord()">⬅️ 上一个</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="nextWord()">下一个 ➡️</button>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-success btn-block" onclick="submitDictation()">✅ 提交批改</button>
+        </div>
+      </div>
+    </div>
+    <div id="dictationResult" style="display:none;"></div>
+  </div>
+
+  <!-- Points Tab -->
+  <div id="tab-points" class="tab-content">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:3rem; margin-bottom:8px;">🏆</div>
+      <div style="font-size:2rem; font-weight:700; color:var(--primary);" id="pointsTotal">0</div>
+      <div style="color:var(--text-secondary);">累计积分</div>
+    </div>
+    <div class="card">
+      <div class="card-title">积分记录</div>
+      <div id="pointsLog"></div>
+    </div>
+  </div>
+
+  <!-- Manage Tab -->
+  <div id="tab-manage" class="tab-content">
+    <div class="card">
+      <div class="card-title">➕ 添加新任务</div>
+      <div class="form-group">
+        <label class="form-label">任务标题</label>
+        <input type="text" class="form-input" id="newTaskTitle" placeholder="如: 朗读课文第3课">
+      </div>
+      <div class="form-group">
+        <label class="form-label">任务类型</label>
+        <select class="form-select" id="newTaskType" onchange="onTaskTypeChange()">
+          <option value="regular">普通任务</option>
+          <option value="reading">朗读打卡</option>
+          <option value="dictation">英语听写</option>
+          <option value="photo">拍照提交</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">学科</label>
+        <select class="form-select" id="newTaskSubject">
+          <option value="chinese">语文</option>
+          <option value="english">英语</option>
+          <option value="math">数学</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">积分值</label>
+        <input type="number" class="form-input" id="newTaskPoints" value="10" min="1">
+      </div>
+      <div class="form-group" id="targetCountGroup">
+        <label class="form-label">目标次数</label>
+        <input type="number" class="form-input" id="newTaskTargetCount" value="1" min="1">
+      </div>
+      <div class="form-group" id="textContentGroup" style="display:none;">
+        <label class="form-label">朗读文本</label>
+        <textarea class="form-textarea" id="newTaskTextContent" placeholder="粘贴需要朗读的课文内容..."></textarea>
+      </div>
+      <div class="form-group" id="wordListGroup" style="display:none;">
+        <label class="form-label">听写词库</label>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <button class="btn btn-outline btn-sm" onclick="generateVocab()">🤖 AI生成词库</button>
+        </div>
+        <textarea class="form-textarea" id="newTaskWordList" placeholder='输入单词列表，如: ["apple", "banana", "cat"]'></textarea>
+        <div id="vocabGenResult" style="margin-top:8px;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">截止日期 (可选)</label>
+        <input type="date" class="form-input" id="newTaskDueDate">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="createTask()">✅ 创建任务</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 所有任务</div>
+      <div id="allTaskList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Photo Modal -->
+<div class="modal-overlay" id="photoModal">
+  <div class="modal">
+    <div class="modal-title">📸 拍照提交</div>
+    <div id="photoPreview"></div>
+    <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="previewPhoto(this)" style="margin:12px 0;">
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-outline" onclick="closeModal('photoModal')">取消</button>
+      <button class="btn btn-success" style="flex:1;" onclick="submitPhoto()">✅ 提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────
+let currentTab = 'tasks';
+let tasks = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let currentReadingTask = null;
+let currentDictationSession = null;
+let dictationWords = [];
+let dictationAnswers = [];
+let currentWordIndex = 0;
+let currentPhotoTaskId = null;
+
+// ─── API Helper ────────────────────────────────────────────────────
+async function api(path, options = {}) {
+  const url = '/api/study' + path;
+  if (options.body instanceof FormData) {
+    const resp = await fetch(url, { method: 'POST', body: options.body });
+    return resp.json();
+  }
+  const resp = await fetch(url);
+  return resp.json();
+}
+
+// ─── Tab Navigation ────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  if (tab === 'tasks') loadTasks();
+  if (tab === 'reading') loadReadingTasks();
+  if (tab === 'dictation') loadDictationTasks();
+  if (tab === 'points') loadPoints();
+  if (tab === 'manage') loadAllTasks();
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────
+async function loadDashboard() {
+  const res = await api('/dashboard');
+  if (res.code === 0) {
+    document.getElementById('totalPoints').textContent = res.data.total_points;
+    document.getElementById('todayPoints').textContent = res.data.today_points;
+    document.getElementById('streakDays').textContent = res.data.streak_days;
+  }
+}
+
+// ─── Tasks ─────────────────────────────────────────────────────────
+async function loadTasks() {
+  const res = await api('/tasks');
+  if (res.code === 0) {
+    tasks = res.data;
+    const list = document.getElementById('taskList');
+    if (tasks.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div>暂无任务，去"管理"页面添加吧</div></div>';
+      return;
+    }
+    list.innerHTML = tasks.map(t => renderTaskCard(t)).join('');
+  }
+}
+
+function renderTaskCard(t) {
+  const typeLabels = { regular: '普通', reading: '朗读', dictation: '听写', photo: '拍照' };
+  const badgeClass = 'badge-' + t.task_type;
+  const progress = t.task_type === 'reading'
+    ? `${t.today_completions}/${t.target_count}遍`
+    : t.today_completions > 0 ? '✅ 已完成' : '未完成';
+
+  let actions = '';
+  if (t.task_type === 'photo') {
+    actions = `<button class="btn btn-sm btn-success" onclick="openPhotoModal(${t.id})">📸 拍照提交</button>`;
+  } else if (t.task_type === 'reading') {
+    actions = `<button class="btn btn-sm btn-primary" onclick="goToReading(${t.id})">📖 去朗读</button>`;
+  } else if (t.task_type === 'dictation') {
+    actions = `<button class="btn btn-sm btn-warning" onclick="goToDictation(${t.id})">🔤 去听写</button>`;
+  } else {
+    actions = `<button class="btn btn-sm btn-success" onclick="completeRegular(${t.id})">✅ 完成</button>`;
+  }
+
+  return `<div class="card">
+    <div class="card-header">
+      <span class="card-title">${t.title}</span>
+      <span class="card-badge ${badgeClass}">${typeLabels[t.task_type]}</span>
+    </div>
+    ${t.description ? `<div class="card-desc">${t.description}</div>` : ''}
+    <div class="card-meta">
+      <span class="card-points">⭐ ${t.points}分</span>
+      <span>${progress}</span>
+      ${t.due_date ? `<span>截止: ${t.due_date}</span>` : ''}
+    </div>
+    <div style="margin-top:12px;">${actions}</div>
+  </div>`;
+}
+
+// ─── Complete Regular Task ─────────────────────────────────────────
+async function completeRegular(taskId) {
+  const form = new FormData();
+  form.append('task_id', taskId);
+  form.append('note', 'manual_complete');
+  // Use photo upload endpoint as generic completion
+  const res = await fetch('/api/study/tasks/' + taskId + '/complete', { method: 'POST' });
+  const data = await res.json();
+  if (data.code === 0) {
+    showToast(`✅ 完成! +${data.data.points_earned}分`);
+    loadTasks();
+    loadDashboard();
+  }
+}
+
+// ─── Photo Upload ──────────────────────────────────────────────────
+function openPhotoModal(taskId) {
+  currentPhotoTaskId = taskId;
+  document.getElementById('photoPreview').innerHTML = '';
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoModal').classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('photoPreview').innerHTML =
+        `<img src="${e.target.result}" class="photo-preview">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function submitPhoto() {
+  const fileInput = document.getElementById('photoInput');
+  if (!fileInput.files[0]) { showToast('请先拍照或选择照片'); return; }
+
+  const form = new FormData();
+  form.append('task_id', currentPhotoTaskId);
+  form.append('file', fileInput.files[0]);
+
+  showToast('上传中...');
+  const res = await fetch('/api/study/photo/upload', { method: 'POST', body: form });
+  const data = await res.json();
+
+  if (data.code === 0) {
+    showToast(`✅ 提交成功! +${data.data.points_earned}分`);
+    closeModal('photoModal');
+    loadTasks();
+    loadDashboard();
+  } else {
+    showToast('❌ 上传失败: ' + (data.detail || '未知错误'));
+  }
+}
+
+// ─── Reading ───────────────────────────────────────────────────────
+async function loadReadingTasks() {
+  const res = await api('/tasks');
+  if (res.code === 0) {
+    const readingTasks = res.data.filter(t => t.task_type === 'reading');
+    const list = document.getElementById('readingTaskList');
+    if (readingTasks.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📖</div><div>暂无朗读任务</div></div>';
+      return;
+    }
+    list.innerHTML = readingTasks.map(t => `
+      <div class="card" onclick="startReading(${t.id})" style="cursor:pointer;">
+        <div class="card-header">
+          <span class="card-title">${t.title}</span>
+          <span class="card-badge badge-reading">${t.today_completions}/${t.target_count}遍</span>
+        </div>
+        ${t.description ? `<div class="card-desc">${t.description}</div>` : ''}
+        <div class="card-meta"><span class="card-points">⭐ ${t.points}分</span></div>
+      </div>
+    `).join('');
+  }
+}
+
+function goToReading(taskId) {
+  switchTabDirect('reading');
+  startReading(taskId);
+}
+
+function switchTabDirect(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.includes(tab === 'reading' ? '朗读' : tab === 'dictation' ? '听写' : tab === 'tasks' ? '任务' : tab === 'points' ? '积分' : '管理'))
+      b.classList.add('active');
+  });
+  document.getElementById('tab-' + tab).classList.add('active');
+  currentTab = tab;
+}
+
+async function startReading(taskId) {
+  const res = await api('/tasks');
+  if (res.code === 0) {
+    const task = res.data.find(t => t.id === taskId);
+    if (!task) return;
+    currentReadingTask = task;
+    document.getElementById('readingTaskList').style.display = 'none';
+    document.getElementById('readingInterface').style.display = 'block';
+    document.getElementById('readingTitle').textContent = task.title;
+    const textContent = task.task_content ? (typeof task.task_content === 'object' ? task.task_content.text || '' : task.task_content) : '';
+    document.getElementById('readingText').textContent = textContent || '(未设置朗读文本，朗读后将直接计数)';
+    document.getElementById('readingResult').style.display = 'none';
+    document.getElementById('recordBtn').style.display = 'block';
+    document.getElementById('recordingIndicator').style.display = 'none';
+  }
+}
+
+async function toggleRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecording();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      processRecording();
+    };
+
+    mediaRecorder.start();
+    document.getElementById('recordBtn').style.display = 'none';
+    document.getElementById('recordingIndicator').style.display = 'flex';
+    document.getElementById('readingResult').style.display = 'none';
+  } catch (e) {
+    showToast('❌ 无法访问麦克风: ' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  document.getElementById('recordBtn').style.display = 'block';
+  document.getElementById('recordingIndicator').style.display = 'none';
+}
+
+async function processRecording() {
+  if (audioChunks.length === 0) return;
+  const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    showToast('识别中...');
+
+    const form = new FormData();
+    form.append('task_id', currentReadingTask.id);
+    form.append('audio_base64', base64);
+
+    const res = await fetch('/api/study/reading/verify', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (data.code === 0) {
+      const d = data.data;
+      const simColor = d.similarity >= 0.8 ? 'var(--success)' : d.similarity >= 0.6 ? 'var(--warning)' : 'var(--danger)';
+      document.getElementById('readingResult').style.display = 'block';
+      document.getElementById('readingResult').innerHTML = `
+        <div style="margin-top:12px;">
+          <div style="font-weight:600; margin-bottom:8px;">朗读结果</div>
+          <div>识别文本: ${d.asr_text || '(无法识别)'}</div>
+          <div style="margin:8px 0;">
+            <span>相似度: </span>
+            <div class="similarity-bar">
+              <div class="similarity-fill" style="width:${d.similarity*100}%; background:${simColor};"></div>
+            </div>
+            <span style="color:${simColor}; font-weight:600;">${(d.similarity*100).toFixed(0)}%</span>
+          </div>
+          <div>朗读次数: ${d.read_count}/${d.target_count}</div>
+          ${d.points_earned > 0 ? `<div style="color:var(--success); font-weight:700; margin-top:8px;">🎉 完成! +${d.points_earned}分</div>` : ''}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="startReading(${currentReadingTask.id})">🔄 继续朗读</button>
+        </div>
+      `;
+      loadDashboard();
+    } else {
+      showToast('❌ 识别失败');
+    }
+  };
+  reader.readAsDataURL(blob);
+}
+
+// ─── Dictation ─────────────────────────────────────────────────────
+async function loadDictationTasks() {
+  const res = await api('/tasks');
+  if (res.code === 0) {
+    const dictTasks = res.data.filter(t => t.task_type === 'dictation');
+    const list = document.getElementById('dictationTaskList');
+    if (dictTasks.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🔤</div><div>暂无听写任务</div></div>';
+      return;
+    }
+    list.innerHTML = dictTasks.map(t => `
+      <div class="card" style="cursor:pointer;" onclick="startDictation(${t.id})">
+        <div class="card-header">
+          <span class="card-title">${t.title}</span>
+          <span class="card-badge badge-dictation">听写</span>
+        </div>
+        ${t.description ? `<div class="card-desc">${t.description}</div>` : ''}
+        <div class="card-meta"><span class="card-points">⭐ ${t.points}分</span></div>
+      </div>
+    `).join('');
+  }
+}
+
+function goToDictation(taskId) {
+  switchTabDirect('dictation');
+  startDictation(taskId);
+}
+
+async function startDictation(taskId) {
+  showToast('准备听写...');
+  const form = new FormData();
+  form.append('task_id', taskId);
+
+  const res = await fetch('/api/study/dictation/start', { method: 'POST', body: form });
+  const data = await res.json();
+
+  if (data.code === 0) {
+    currentDictationSession = data.data.session_id;
+    dictationWords = data.data.audio_items;
+    dictationAnswers = new Array(dictationWords.length).fill('');
+    currentWordIndex = 0;
+
+    document.getElementById('dictationTaskList').style.display = 'none';
+    document.getElementById('dictationInterface').style.display = 'block';
+    document.getElementById('dictationResult').style.display = 'none';
+
+    renderDictationProgress();
+    showCurrentWord();
+  } else {
+    showToast('❌ ' + (data.detail || '启动失败'));
+  }
+}
+
+function renderDictationProgress() {
+  const dots = dictationWords.map((_, i) => {
+    let cls = 'dictation-dot';
+    if (i < currentWordIndex) cls += ' done';
+    if (i === currentWordIndex) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  document.getElementById('dictationProgress').innerHTML = dots;
+}
+
+function showCurrentWord() {
+  if (currentWordIndex >= dictationWords.length) return;
+  document.getElementById('dictationInput').value = dictationAnswers[currentWordIndex] || '';
+  document.getElementById('dictationInput').focus();
+  document.getElementById('wordHint').textContent = `第 ${currentWordIndex + 1}/${dictationWords.length} 个词`;
+  renderDictationProgress();
+}
+
+function playCurrentWord() {
+  if (currentWordIndex >= dictationWords.length) return;
+  const item = dictationWords[currentWordIndex];
+  if (item.audio_url) {
+    const audio = new Audio(item.audio_url);
+    audio.play();
+  } else {
+    showToast('音频未生成');
+  }
+}
+
+function nextWord() {
+  dictationAnswers[currentWordIndex] = document.getElementById('dictationInput').value;
+  if (currentWordIndex < dictationWords.length - 1) {
+    currentWordIndex++;
+    showCurrentWord();
+    // Auto play next word
+    setTimeout(playCurrentWord, 300);
+  }
+}
+
+function prevWord() {
+  dictationAnswers[currentWordIndex] = document.getElementById('dictationInput').value;
+  if (currentWordIndex > 0) {
+    currentWordIndex--;
+    showCurrentWord();
+  }
+}
+
+async function submitDictation() {
+  dictationAnswers[currentWordIndex] = document.getElementById('dictationInput').value;
+
+  const form = new FormData();
+  form.append('session_id', currentDictationSession);
+  form.append('answers', JSON.stringify(dictationAnswers));
+
+  showToast('批改中...');
+  const res = await fetch('/api/study/dictation/submit', { method: 'POST', body: form });
+  const data = await res.json();
+
+  if (data.code === 0) {
+    const d = data.data;
+    document.getElementById('dictationInterface').style.display = 'none';
+    document.getElementById('dictationResult').style.display = 'block';
+    document.getElementById('dictationResult').innerHTML = `
+      <div class="card">
+        <div class="card-title">📝 听写结果</div>
+        <div style="text-align:center; margin:16px 0;">
+          <div style="font-size:2rem; font-weight:700; color:${d.score >= 80 ? 'var(--success)' : d.score >= 60 ? 'var(--warning)' : 'var(--danger)'};">
+            ${d.score.toFixed(0)}分
+          </div>
+          <div>正确 ${d.correct_count}/${d.total}</div>
+          ${d.points_earned > 0 ? `<div style="color:var(--success); font-weight:700;">🎉 +${d.points_earned}分</div>` : ''}
+        </div>
+        <div>
+          ${d.results.map(r => `
+            <div class="result-item">
+              <span>${r.word}</span>
+              <span class="${r.correct ? 'result-correct' : 'result-wrong'}">
+                ${r.correct ? '✅' : '❌ ' + r.user_answer}
+              </span>
+            </div>
+          `).join('')}
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="backToDictationList()">返回</button>
+      </div>
+    `;
+    loadDashboard();
+  } else {
+    showToast('❌ 提交失败');
+  }
+}
+
+function backToDictationList() {
+  document.getElementById('dictationInterface').style.display = 'none';
+  document.getElementById('dictationResult').style.display = 'none';
+  document.getElementById('dictationTaskList').style.display = 'block';
+  loadDictationTasks();
+}
+
+// ─── Points ────────────────────────────────────────────────────────
+async function loadPoints() {
+  const res = await api('/points');
+  if (res.code === 0) {
+    document.getElementById('pointsTotal').textContent = res.data.total_points;
+    const logHtml = res.data.recent_logs.map(l => `
+      <div class="log-item">
+        <div>
+          <div class="log-reason">${l.reason}</div>
+          <div class="log-time">${new Date(l.created_at).toLocaleString('zh-CN')}</div>
+        </div>
+        <div class="log-points">+${l.points}</div>
+      </div>
+    `).join('');
+    document.getElementById('pointsLog').innerHTML = logHtml || '<div class="empty-state">暂无记录</div>';
+  }
+}
+
+// ─── Manage Tasks ──────────────────────────────────────────────────
+function onTaskTypeChange() {
+  const type = document.getElementById('newTaskType').value;
+  document.getElementById('textContentGroup').style.display = type === 'reading' ? 'block' : 'none';
+  document.getElementById('wordListGroup').style.display = type === 'dictation' ? 'block' : 'none';
+  document.getElementById('targetCountGroup').style.display = type === 'reading' ? 'block' : 'none';
+}
+
+async function createTask() {
+  const title = document.getElementById('newTaskTitle').value.trim();
+  if (!title) { showToast('请输入任务标题'); return; }
+
+  const type = document.getElementById('newTaskType').value;
+  const form = new FormData();
+  form.append('title', title);
+  form.append('task_type', type);
+  form.append('subject', document.getElementById('newTaskSubject').value);
+  form.append('points', document.getElementById('newTaskPoints').value);
+  form.append('target_count', document.getElementById('newTaskTargetCount').value);
+  form.append('due_date', document.getElementById('newTaskDueDate').value);
+
+  if (type === 'reading') {
+    const text = document.getElementById('newTaskTextContent').value;
+    form.append('task_content', JSON.stringify({ text }));
+  } else if (type === 'dictation') {
+    const wordsStr = document.getElementById('newTaskWordList').value;
+    try {
+      const words = JSON.parse(wordsStr);
+      form.append('task_content', JSON.stringify({ words }));
+    } catch {
+      showToast('词库格式错误，需要JSON数组');
+      return;
+    }
+  }
+
+  const res = await fetch('/api/study/tasks', { method: 'POST', body: form });
+  const data = await res.json();
+
+  if (data.code === 0) {
+    showToast('✅ 任务创建成功!');
+    document.getElementById('newTaskTitle').value = '';
+    document.getElementById('newTaskTextContent').value = '';
+    document.getElementById('newTaskWordList').value = '';
+    loadAllTasks();
+  } else {
+    showToast('❌ 创建失败');
+  }
+}
+
+async function loadAllTasks() {
+  const res = await fetch('/api/study/tasks?active_only=false');
+  const data = await res.json();
+  if (data.code === 0) {
+    const list = document.getElementById('allTaskList');
+    if (data.data.length === 0) {
+      list.innerHTML = '<div class="empty-state">暂无任务</div>';
+      return;
+    }
+    list.innerHTML = data.data.map(t => `
+      <div class="result-item">
+        <div>
+          <strong>${t.title}</strong>
+          <span class="card-badge badge-${t.task_type}" style="margin-left:8px;">${t.task_type}</span>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">删除</button>
+      </div>
+    `).join('');
+  }
+}
+
+async function deleteTask(taskId) {
+  if (!confirm('确定删除此任务?')) return;
+  const res = await fetch('/api/study/tasks/' + taskId, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.code === 0) {
+    showToast('已删除');
+    loadAllTasks();
+  }
+}
+
+async function generateVocab() {
+  const subject = document.getElementById('newTaskSubject').value;
+  const form = new FormData();
+  form.append('subject', subject);
+  form.append('grade', '初一');
+
+  document.getElementById('vocabGenResult').innerHTML = '<span>生成中...</span>';
+
+  const res = await fetch('/api/study/generate/vocabulary', { method: 'POST', body: form });
+  const data = await res.json();
+
+  if (data.code === 0) {
+    const words = data.data.words || [];
+    document.getElementById('newTaskWordList').value = JSON.stringify(words);
+    document.getElementById('vocabGenResult').innerHTML =
+      `<span style="color:var(--success);">✅ 已生成 ${words.length} 个单词</span>`;
+  } else {
+    document.getElementById('vocabGenResult').innerHTML =
+      '<span style="color:var(--danger);">生成失败</span>';
+  }
+}
+
+// ─── Init ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+  loadTasks();
+});
+
+// Handle Enter key in dictation
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && currentTab === 'dictation' && document.getElementById('dictationInterface').style.display !== 'none') {
+    nextWord();
+  }
+});
+</script>
+</body>
+</html>

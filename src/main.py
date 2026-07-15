@@ -286,6 +286,37 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# ─── Study Todo App: Register routes & static files ─────────────────
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+# Register study API routes
+from tools.study_routes import router as study_router, init_db as study_init_db
+app.include_router(study_router)
+
+# Serve static files
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir, html=True), name="static")
+
+@app.get("/")
+async def serve_index():
+    """Serve the main page."""
+    index_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "Study Todo App - index.html not found"}
+
+@app.on_event("startup")
+async def _init_study_db():
+    """Initialize study database tables on startup."""
+    try:
+        study_init_db()
+        logger.info("Study app DB initialized.")
+    except Exception as e:
+        logger.error(f"Study DB init error: {e}")
+
 # OpenAI 兼容接口处理器
 openai_handler = OpenAIChatHandler(service)
 
