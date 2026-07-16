@@ -771,10 +771,9 @@ let dictState = {
   allWrongEver: [], phase: 'select'
 };
 
-function loadDictationForTask(taskId) {
-  const task = Store.getTasks().find(t => t.id === taskId);
+function loadDictationForTask(task) {
   if (!task) return;
-  dictState.taskId = taskId;
+  dictState.taskId = task.id;
   dictState.textbookId = task.textbookId || 'yl-7a';
   dictState.unitId = task.unitId || 'U1';
   // Set selects
