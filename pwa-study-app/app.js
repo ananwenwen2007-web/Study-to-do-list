@@ -644,14 +644,15 @@ function populateTextbookSelect() {
   // 英语
   if (TEXTBOOK_DATA.english) {
     Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
-      Object.keys(TEXTBOOK_DATA.english[publisher]).forEach(grade => {
-        Object.keys(TEXTBOOK_DATA.english[publisher][grade]).forEach(unit => {
+      const tb = TEXTBOOK_DATA.english[publisher];
+      if (tb.units) {
+        Object.keys(tb.units).forEach(unit => {
           const opt = document.createElement('option');
-          opt.value = 'en|' + publisher + '|' + grade + '|' + unit;
-          opt.textContent = ' 英语 ' + publisher + ' ' + grade + ' ' + unit;
+          opt.value = 'en|' + publisher + '|units|' + unit;
+          opt.textContent = ' 英语 ' + (tb.name || publisher) + ' ' + tb.units[unit].title;
           select.appendChild(opt);
         });
-      });
+      }
     });
   }
 
@@ -710,7 +711,7 @@ function onTextbookSelectChange() {
 
 function getTextbookContent(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.[grade]?.[unit]?.words?.map(w => w.word + ' ' + w.meaning).join('\n') || null;
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words?.map(w => w.word + ' ' + w.meaning).join('\n') || null;
     if (type === 'cn') return TEXTBOOK_DATA.chinese[publisher]?.[grade]?.[unit]?.reading || null;
     if (type === 'cl') return TEXTBOOK_DATA.classical[publisher]?.[unit]?.reading || null;
   } catch { return null; }
@@ -719,7 +720,7 @@ function getTextbookContent(type, publisher, grade, unit) {
 
 function getTextbookWords(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.[grade]?.[unit]?.words || null;
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words || null;
   } catch { return null; }
   return null;
 }
