@@ -684,7 +684,6 @@ function initReadingSelect() {
     console.log('chinese keys:', Object.keys(TEXTBOOK_DATA.chinese));
     Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
       console.log('publisher:', publisher, 'grades:', Object.keys(TEXTBOOK_DATA.chinese[publisher]));
-    Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
       Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
         Object.keys(TEXTBOOK_DATA.chinese[publisher][grade]).forEach(unit => {
           const opt = document.createElement('option');
