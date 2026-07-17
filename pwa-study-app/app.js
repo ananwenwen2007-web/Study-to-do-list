@@ -555,6 +555,21 @@ function populateTextbookSelect() {
     });
   }
 
+  // 英语课文
+  if (TEXTBOOK_DATA.english) {
+    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
+      const tb = TEXTBOOK_DATA.english[publisher];
+      if (tb.units) {
+        Object.keys(tb.units).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'en|' + publisher + '||' + unit;
+          opt.textContent = ' 英语 ' + (tb.name || publisher) + ' ' + tb.units[unit].title;
+          select.appendChild(opt);
+        });
+      }
+    });
+  }
+
   // 古文诗歌
   if (TEXTBOOK_DATA.classical) {
     Object.keys(TEXTBOOK_DATA.classical).forEach(category => {
@@ -590,7 +605,7 @@ function onTextbookSelectChange() {
 
 function getTextbookContent(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words?.map(w => w.word + ' ' + w.meaning).join('\n') || null;
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.reading || null;
     if (type === 'cn') return TEXTBOOK_DATA.chinese[publisher]?.[grade]?.[unit]?.reading || null;
     if (type === 'cl') return TEXTBOOK_DATA.classical[publisher]?.[unit]?.reading || null;
   } catch { return null; }
@@ -599,7 +614,7 @@ function getTextbookContent(type, publisher, grade, unit) {
 
 function getTextbookWords(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words || null;
+    if (type === 'en') return null;
   } catch { return null; }
   return null;
 }
@@ -668,6 +683,21 @@ function initReadingSelect() {
           select.appendChild(opt);
         });
       });
+    });
+  }
+
+  // 英语课文
+  if (TEXTBOOK_DATA.english) {
+    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
+      const tb = TEXTBOOK_DATA.english[publisher];
+      if (tb.units) {
+        Object.keys(tb.units).forEach(unit => {
+          const opt = document.createElement('option');
+          opt.value = 'en|' + publisher + '||' + unit;
+          opt.textContent = ' 英语 ' + (tb.name || publisher) + ' ' + tb.units[unit].title;
+          select.appendChild(opt);
+        });
+      }
     });
   }
 
