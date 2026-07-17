@@ -25,7 +25,10 @@ function speak(text, lang, onEnd) {
     if (onEnd) onEnd();
     return;
   }
-  // Don't cancel on mobile - it can interrupt playback
+  // Fix for Android Chrome: resume if paused
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang || 'zh-CN';
   utterance.rate = 0.85;
@@ -931,6 +934,7 @@ let dictState = {
 function loadDictationForTask(task) {
   if (!task) return;
   dictState.taskId = task.id;
+  console.log('loadDictationForTask: taskId =', dictState.taskId, 'task =', task);
   dictState.textbookId = task.textbookId || 'yl-7a';
   dictState.unitId = task.unitId || 'U1';
   // Set selects
@@ -1167,17 +1171,22 @@ function finishDictation() {
   const btnStartDict = document.getElementById('btnStartDict');
   if (btnStartDict) { btnStartDict.textContent = '🎧 开始听写'; btnStartDict.onclick = startDictationRound; }
   // 完成关联的任务并发放积分
+  console.log('finishDictation: taskId =', dictState.taskId);
   if (dictState.taskId) {
+    const tasks = Store.getTasks();
+    const task = tasks.find(t => t.id === dictState.taskId);
+    console.log('finishDictation: task =', task);
     completeTaskById(dictState.taskId);
     dictState.taskId = null;
     // 强制刷新积分显示
     setTimeout(() => {
       updatePointsBadge();
       renderPoints();
+      renderTasks();
     }, 100);
   }
   showDictStep('select');
-  showToast('🎉 听写任务完成，积分已发放！');
+  showToast(' 听写任务完成，积分已发放！');
 }
 
 function getWrongBook() { return Store.get('wrongBook', []); }
