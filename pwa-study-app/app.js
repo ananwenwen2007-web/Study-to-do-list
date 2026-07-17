@@ -397,9 +397,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initDateNav();
   initSettings();
 
-  // Register service worker
+  // Register service worker with force update
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('sw.js?v=8').then((reg) => {
+      // Check for updates every time the page loads
+      reg.update();
+    }).catch(() => {});
+    // Force unregister old service workers
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((reg) => {
+        if (reg.active && reg.active.scriptURL.indexOf('sw.js') !== -1) {
+          // Don't unregister, just let the new one take over
+        }
+      });
+    });
   }
 });
 
