@@ -556,6 +556,7 @@ function populateTextbookSelect() {
   }
 
   // 英语课文
+  console.log('TEXTBOOK_DATA.english:', TEXTBOOK_DATA.english ? 'exists' : 'missing');
   if (TEXTBOOK_DATA.english) {
     Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
       const tb = TEXTBOOK_DATA.english[publisher];
@@ -667,12 +668,18 @@ function saveTask() {
 
 // ===== 朗读打卡 =====
 function initReadingSelect() {
+  console.log('initReadingSelect called');
   const select = document.getElementById('readingSelect');
-  if (!select) return;
+  if (!select) {
+    console.log('readingSelect element not found');
+    return;
+  }
+  console.log('readingSelect element found');
 
   select.innerHTML = '<option value="">-- 选择课文 --</option>';
 
   // 语文课文
+  console.log('TEXTBOOK_DATA.chinese:', TEXTBOOK_DATA.chinese ? 'exists' : 'missing');
   if (TEXTBOOK_DATA.chinese) {
     Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
       Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
@@ -687,6 +694,7 @@ function initReadingSelect() {
   }
 
   // 英语课文
+  console.log('TEXTBOOK_DATA.english:', TEXTBOOK_DATA.english ? 'exists' : 'missing');
   if (TEXTBOOK_DATA.english) {
     Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
       const tb = TEXTBOOK_DATA.english[publisher];
@@ -713,7 +721,8 @@ function initReadingSelect() {
     });
   }
 
-  select.addEventListener('change', () => {
+  select.addEventListener('change', (e) => {
+    console.log('Select changed:', e.target.value);
     const val = select.value;
     const contentEl = document.getElementById('readingContent');
     if (!contentEl) return;
