@@ -7,13 +7,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="学习助手">
   <meta name="theme-color" content="#4f46e5">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>学习小助手</title>
-  <link rel="manifest" href="manifest.json?v=8">
+  <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <!-- Header -->
@@ -69,6 +66,78 @@
       </div>
     </section>
 
+    <!-- Tab: Dictation -->
+    <section class="tab-content" id="tabDictation">
+      <div class="section-header">
+        <h2>🔤 英语听写</h2>
+      </div>
+
+      <!-- Step 0: Select -->
+      <div id="dictStepSelect">
+        <div class="textbook-select">
+          <select id="dictationTextbook">
+            <option value="">选择教材版本</option>
+            <option value="yl-7a">译林版 七年级上(2026秋)</option>
+          </select>
+          <select id="dictationUnit">
+            <option value="">选择单元</option>
+          </select>
+        </div>
+        <div id="dictWordCount" style="text-align:center;color:var(--text-secondary);font-size:14px;margin-top:8px"></div>
+        <button class="btn-primary" id="btnStartStudy" style="width:100%;margin-top:16px;display:none">📖 开始学习单词</button>
+      </div>
+
+      <!-- Step 1: Study word cards -->
+      <div id="dictStepStudy" style="display:none">
+        <div class="word-card">
+          <div class="word-card-word" id="studyWord"></div>
+          <div class="word-card-phonetic" id="studyPhonetic"></div>
+          <div class="word-card-meaning" id="studyMeaning"></div>
+          <div class="word-card-tip" id="studyTip"></div>
+        </div>
+        <div class="word-card-nav">
+          <button class="date-nav-btn" id="btnPrevWord">◀</button>
+          <span class="word-card-counter" id="studyCounter">1/20</span>
+          <button class="date-nav-btn" id="btnNextWord">▶</button>
+        </div>
+        <button class="btn-primary" id="btnStartDict" style="width:100%;margin-top:16px"> 开始听写</button>
+      </div>
+
+      <!-- Step 2: Dictation -->
+      <div id="dictStepDictate" style="display:none">
+        <div class="dictation-progress">
+          <span id="dictRoundLabel">第1轮</span>
+          <span id="dictProgressText">1/20</span>
+        </div>
+        <div class="dictation-word-display">
+          <button class="btn-play" id="btnPlayWord" style="font-size:48px">🔊</button>
+          <p style="font-size:14px;color:var(--text-secondary)">点击播放，输入听到的单词</p>
+        </div>
+        <input type="text" class="dictation-input" id="dictInput" placeholder="输入单词" autocomplete="off" autocapitalize="off">
+        <button class="btn-primary" id="btnSubmitDict" style="width:100%">提交</button>
+        <div class="dict-feedback" id="dictFeedback"></div>
+      </div>
+
+      <!-- Step 3: Results -->
+      <div id="dictStepResult" style="display:none">
+        <div class="result-summary" id="resultSummary"></div>
+        <div class="result-lists">
+          <div class="result-correct" id="resultCorrect"></div>
+          <div class="result-wrong" id="resultWrong"></div>
+        </div>
+        <button class="btn-primary" id="btnReviewWrong" style="width:100%">📖 学习错题后继续</button>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div id="dictStepSuccess" style="display:none">
+        <div class="success-display">
+          <div style="font-size:64px"></div>
+          <h2>打怪成功！</h2>
+          <p id="successDetail"></p>
+        </div>
+        <button class="btn-primary" id="btnFinishDict" style="width:100%">✅ 完成任务</button>
+      </div>
+    </section>
 
     <!-- Tab: Points -->
     <section class="tab-content" id="tabPoints">
@@ -122,6 +191,10 @@
       <span class="nav-icon">🎤</span>
       <span class="nav-label">朗读</span>
     </button>
+    <button class="nav-item" data-tab="tabDictation">
+      <span class="nav-icon">🔤</span>
+      <span class="nav-label">听写</span>
+    </button>
     <button class="nav-item" data-tab="tabPoints">
       <span class="nav-icon">🏆</span>
       <span class="nav-label">积分</span>
@@ -166,6 +239,10 @@
             <label class="type-option">
               <input type="radio" name="taskType" value="reading">
               <span>🎤 朗读</span>
+            </label>
+            <label class="type-option">
+              <input type="radio" name="taskType" value="dictation">
+              <span>🔤 听写</span>
             </label>
           </div>
         </div>
@@ -272,6 +349,6 @@
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js"></script>
 </body>
 </html>

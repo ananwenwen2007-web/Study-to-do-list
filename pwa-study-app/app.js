@@ -25,16 +25,13 @@ function speak(text, lang, onEnd) {
     if (onEnd) onEnd();
     return;
   }
-  // Fix for Android Chrome: resume if paused
-  if (window.speechSynthesis.paused) {
-    window.speechSynthesis.resume();
-  }
+  window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang || 'zh-CN';
   utterance.rate = 0.85;
   utterance.pitch = 1;
   utterance.onend = function() { if (onEnd) onEnd(); };
-  utterance.onerror = function(e) { console.log('TTS error:', e); if (onEnd) onEnd(); };
+  utterance.onerror = function() { if (onEnd) onEnd(); };
   window.speechSynthesis.speak(utterance);
 }
 
@@ -395,24 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPoints();
   renderWeeklyStats();
   initReadingSelect();
+  initDictation();
   initPhotoUpload();
   initDateNav();
   initSettings();
 
-  // Register service worker with force update
+  // Register service worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=8').then((reg) => {
-      // Check for updates every time the page loads
-      reg.update();
-    }).catch(() => {});
-    // Force unregister old service workers
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((reg) => {
-        if (reg.active && reg.active.scriptURL.indexOf('sw.js') !== -1) {
-          // Don't unregister, just let the new one take over
-        }
-      });
-    });
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 });
 
@@ -485,6 +472,7 @@ function initModalButtons() {
   const photoPlaceholder = document.getElementById('photoPlaceholder');
   if (photoPlaceholder) photoPlaceholder.addEventListener('click', triggerPhotoInput);
 
+  // 听写按钮已移至 initDictation()
 
   // 单词输入框回车提交
   const wordAnswer = document.getElementById('wordAnswer');
@@ -533,6 +521,7 @@ function renderTasks() {
           <span class="task-subject">${escapeHtml(task.subject)}</span>
           <span class="task-points">⭐ ${task.points}积分</span>
           ${task.type === 'reading' ? '<span>🎤</span>' : ''}
+          ${task.type === 'dictation' ? '<span>🔤</span>' : ''}
           ${task.photoUrl ? '<span>📸</span>' : ''}
         </div>
       </div>
@@ -549,9 +538,14 @@ function toggleTask(taskId) {
   const task = tasks.find(t => t.id === taskId);
   if (!task) return;
 
-  if (task.type === 'reading') {
-    switchTab('tabReading');
-    loadReadingForTask(task);
+  if (task.type === 'reading' || task.type === 'dictation') {
+    if (task.type === 'reading') {
+      switchTab('tabReading');
+      loadReadingForTask(task);
+    } else {
+      switchTab('tabDictation');
+      loadDictationForTask(task);
+    }
     return;
   }
 
@@ -577,7 +571,9 @@ function openTaskAction(taskId) {
   if (task.type === 'reading') {
     switchTab('tabReading');
     loadReadingForTask(task);
-    return;
+  } else if (task.type === 'dictation') {
+    switchTab('tabDictation');
+    loadDictationForTask(task);
   } else {
     openPhotoModal(taskId);
   }
@@ -635,6 +631,7 @@ function updateTypeFields() {
   const readingContentGroup = document.getElementById('readingContentGroup');
 
   if (textbookGroup) textbookGroup.style.display = type !== 'normal' ? 'block' : 'none';
+  if (wordListGroup) wordListGroup.style.display = type === 'dictation' ? 'block' : 'none';
   if (readingContentGroup) readingContentGroup.style.display = type === 'reading' ? 'block' : 'none';
 }
 
@@ -703,7 +700,13 @@ function onTextbookSelectChange() {
     const content = getTextbookContent(type, publisher, grade, unit);
     const textarea = document.getElementById('taskReadingContent');
     if (textarea && content) textarea.value = content;
-
+  } else if (currentType === 'dictation') {
+    const words = getTextbookWords(type, publisher, grade, unit);
+    const textarea = document.getElementById('taskWordList');
+    if (textarea && words) {
+      textarea.value = JSON.stringify(words.map(w => w.word));
+    }
+  }
 }
 
 function getTextbookContent(type, publisher, grade, unit) {
@@ -744,7 +747,7 @@ function saveTask() {
     createdAt: new Date().toISOString(),
   };
 
-  // 如果是朗读任务，获取教材内容
+  // 如果是朗读或听写任务，获取教材内容
   if (type === 'reading') {
     const content = document.getElementById('taskReadingContent').value.trim();
     if (content) task.readingContent = content;
@@ -901,6 +904,281 @@ function stopRecording() {
     btnRecord.innerHTML = '<span class="record-icon">🎙️</span><span class="record-text">开始录音</span>';
     btnRecord.classList.remove('recording');
   }
+}
+
+// ===== 英语听写（打怪闯关模式）=====
+const DICT_WORDS_PER_ROUND = 20;
+
+let dictState = {
+  textbookId: '', unitId: '',
+  allWords: [], studyIndex: 0, studyWords: [],
+  round: 1, queue: [], currentIndex: 0,
+  correct: [], wrong: [], totalRounds: 0,
+  allWrongEver: [], phase: 'select'
+};
+
+function loadDictationForTask(task) {
+  if (!task) return;
+  dictState.taskId = task.id;
+  dictState.textbookId = task.textbookId || 'yl-7a';
+  dictState.unitId = task.unitId || 'U1';
+  // Set selects
+  const tbSel = document.getElementById('dictationTextbook');
+  if (tbSel) tbSel.value = dictState.textbookId;
+  onDictTextbookChange();
+  setTimeout(function() {
+    const uSel = document.getElementById('dictationUnit');
+    if (uSel) uSel.value = dictState.unitId;
+    onDictUnitChange();
+    showDictStep('study');
+  }, 100);
+}
+
+function initDictation() {
+  const sel = document.getElementById('dictationTextbook');
+  if (sel) sel.addEventListener('change', onDictTextbookChange);
+  const unitSel = document.getElementById('dictationUnit');
+  if (unitSel) unitSel.addEventListener('change', onDictUnitChange);
+  const btnStudy = document.getElementById('btnStartStudy');
+  if (btnStudy) btnStudy.addEventListener('click', () => showDictStep('study'));
+  const btnPrev = document.getElementById('btnPrevWord');
+  const btnNext = document.getElementById('btnNextWord');
+  if (btnPrev) btnPrev.addEventListener('click', () => navigateStudyWord(-1));
+  if (btnNext) btnNext.addEventListener('click', () => navigateStudyWord(1));
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) btnStartDict.addEventListener('click', startDictationRound);
+  const btnPlay = document.getElementById('btnPlayWord');
+  if (btnPlay) btnPlay.addEventListener('click', playCurrentWord);
+  const btnSubmit = document.getElementById('btnSubmitDict');
+  if (btnSubmit) btnSubmit.addEventListener('click', submitDictAnswer);
+  const dictInput = document.getElementById('dictInput');
+  if (dictInput) dictInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitDictAnswer(); });
+  const btnReview = document.getElementById('btnReviewWrong');
+  if (btnReview) btnReview.addEventListener('click', startWrongReview);
+  const btnFinish = document.getElementById('btnFinishDict');
+  if (btnFinish) btnFinish.addEventListener('click', finishDictation);
+}
+
+function onDictTextbookChange() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const unitSel = document.getElementById('dictationUnit');
+  unitSel.innerHTML = '<option value="">选择单元</option>';
+  document.getElementById('btnStartStudy').style.display = 'none';
+  document.getElementById('dictWordCount').textContent = '';
+  if (!tid) return;
+  const tb = TEXTBOOK_DATA.english[tid];
+  if (!tb) return;
+  Object.keys(tb.units).forEach(uid => {
+    const u = tb.units[uid];
+    const opt = document.createElement('option');
+    opt.value = uid; opt.textContent = u.title;
+    unitSel.appendChild(opt);
+  });
+}
+
+function onDictUnitChange() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const uid = document.getElementById('dictationUnit').value;
+  const btnStudy = document.getElementById('btnStartStudy');
+  const countEl = document.getElementById('dictWordCount');
+  if (!tid || !uid) { btnStudy.style.display = 'none'; countEl.textContent = ''; return; }
+  const words = TEXTBOOK_DATA.english[tid].units[uid].words;
+  countEl.textContent = '本单元共 ' + words.length + ' 个单词';
+  btnStudy.style.display = 'block';
+}
+
+function showDictStep(step) {
+  dictState.phase = step;
+  ['dictStepSelect','dictStepStudy','dictStepDictate','dictStepResult','dictStepSuccess'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  const map = {select:'dictStepSelect',study:'dictStepStudy',dictate:'dictStepDictate',result:'dictStepResult',success:'dictStepSuccess'};
+  const el = document.getElementById(map[step]); if (el) el.style.display = 'block';
+  if (step === 'study') initStudyPhase();
+}
+
+function initStudyPhase() {
+  const tid = document.getElementById('dictationTextbook').value;
+  const uid = document.getElementById('dictationUnit').value;
+  if (!tid || !uid) return;
+  dictState.textbookId = tid; dictState.unitId = uid;
+  dictState.allWords = TEXTBOOK_DATA.english[tid].units[uid].words;
+  dictState.studyWords = [...dictState.allWords];
+  dictState.studyIndex = 0;
+  renderStudyCard();
+}
+
+function renderStudyCard() {
+  const words = dictState.studyWords;
+  const idx = dictState.studyIndex;
+  if (idx < 0 || idx >= words.length) return;
+  const w = words[idx];
+  document.getElementById('studyWord').textContent = w.word;
+  document.getElementById('studyPhonetic').textContent = w.phonetic || '';
+  document.getElementById('studyMeaning').textContent = w.meaning;
+  document.getElementById('studyTip').textContent = w.tip || '';
+  document.getElementById('studyCounter').textContent = (idx+1) + '/' + words.length;
+}
+
+function navigateStudyWord(offset) {
+  const words = dictState.studyWords;
+  dictState.studyIndex = Math.max(0, Math.min(words.length-1, dictState.studyIndex + offset));
+  renderStudyCard();
+}
+
+function startDictationRound() {
+  dictState.round = dictState.totalRounds + 1;
+  dictState.totalRounds = dictState.round;
+  dictState.correct = []; dictState.wrong = []; dictState.allWrongEver = [];
+  dictState.currentIndex = 0;
+
+  const wrongBook = getWrongBook();
+  const allWords = dictState.allWords;
+  let queue = [];
+
+  if (wrongBook.length > 0) {
+    const ww = allWords.filter(w => wrongBook.includes(w.word));
+    queue = shuffleArray([...ww]);
+  }
+  const remaining = allWords.filter(w => !queue.find(q => q.word === w.word));
+  const needed = DICT_WORDS_PER_ROUND - queue.length;
+  queue = queue.concat(shuffleArray([...remaining]).slice(0, Math.max(0, needed)));
+  if (queue.length > DICT_WORDS_PER_ROUND) queue = shuffleArray(queue).slice(0, DICT_WORDS_PER_ROUND);
+
+  dictState.queue = shuffleArray(queue);
+  showDictStep('dictate');
+  renderDictProgress();
+  setTimeout(() => playCurrentWord(0), 300);
+}
+
+function renderDictProgress() {
+  document.getElementById('dictRoundLabel').textContent = '第' + dictState.round + '轮';
+  document.getElementById('dictProgressText').textContent = (dictState.currentIndex+1) + '/' + dictState.queue.length;
+  document.getElementById('dictFeedback').textContent = '';
+  document.getElementById('dictFeedback').style.color = '';
+  const input = document.getElementById('dictInput'); if (input) input.value = '';
+}
+
+function playCurrentWord(repeatIndex) {
+  if (repeatIndex === undefined) repeatIndex = 0;
+  const idx = dictState.currentIndex;
+  if (idx >= dictState.queue.length) return;
+  const word = dictState.queue[idx];
+  const label = document.getElementById('dictProgressText');
+  if (label) label.textContent = (idx+1) + '/' + dictState.queue.length + ' (第' + (repeatIndex+1) + '遍)';
+  speak(word.word, 'en-US', function() {
+    if (repeatIndex < 2) {
+      setTimeout(function() { playCurrentWord(repeatIndex + 1); }, 800);
+    }
+  });
+}
+
+function submitDictAnswer() {
+  const input = document.getElementById('dictInput');
+  if (!input) return;
+  const answer = input.value.trim().toLowerCase();
+  if (!answer) return;
+
+  const word = dictState.queue[dictState.currentIndex];
+  const isCorrect = answer === word.word.toLowerCase();
+  const feedback = document.getElementById('dictFeedback');
+
+  if (isCorrect) {
+    dictState.correct.push(word);
+    feedback.textContent = '✅ 正确！'; feedback.style.color = '#22c55e';
+  } else {
+    dictState.wrong.push(word);
+    if (!dictState.allWrongEver.find(w => w.word === word.word)) dictState.allWrongEver.push(word);
+    feedback.textContent = '❌ 正确答案：' + word.word; feedback.style.color = '#ef4444';
+  }
+
+  setTimeout(() => {
+    dictState.currentIndex++;
+    if (dictState.currentIndex >= dictState.queue.length) showDictResult();
+    else { renderDictProgress(); playCurrentWord(0); }
+  }, 1200);
+}
+
+function showDictResult() {
+  const total = dictState.queue.length;
+  const cc = dictState.correct.length;
+  const wc = dictState.wrong.length;
+  updateWrongBook(dictState.allWrongEver.map(w => w.word));
+
+  document.getElementById('resultSummary').innerHTML =
+    '<h3>第' + dictState.round + '轮结果</h3>' +
+    '<p style="font-size:24px;font-weight:700;color:' + (wc===0?'#22c55e':'#f59e0b') + '">' + cc + '/' + total + ' 正确</p>';
+
+  document.getElementById('resultCorrect').innerHTML =
+    '<h4>✅ 已掌握 (' + cc + '个)</h4><div class="result-word-list">' +
+    (dictState.correct.map(w => w.word).join('、') || '无') + '</div>';
+
+  if (wc > 0) {
+    document.getElementById('resultWrong').style.display = 'block';
+    document.getElementById('resultWrong').innerHTML =
+      '<h4>❌ 出错 (' + wc + '个) → 已加入错题本</h4><div class="result-word-list">' +
+      dictState.wrong.map(w => w.word + ' ' + (w.meaning||'')).join('<br>') + '</div>';
+    document.getElementById('btnReviewWrong').style.display = 'block';
+    document.getElementById('btnReviewWrong').textContent = '📖 学习错题后继续（还剩' + wc + '个）';
+    showDictStep('result');
+  } else {
+    showDictSuccess();
+  }
+}
+
+function startWrongReview() {
+  dictState.studyWords = [...dictState.wrong];
+  dictState.studyIndex = 0;
+  showDictStep('study');
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) {
+    btnStartDict.textContent = '🎧 听写错题（' + dictState.wrong.length + '个）';
+    btnStartDict.onclick = function() {
+      dictState.queue = shuffleArray([...dictState.wrong]);
+      dictState.correct = []; dictState.wrong = []; dictState.allWrongEver = [];
+      dictState.currentIndex = 0; dictState.round++; dictState.totalRounds = dictState.round;
+      showDictStep('dictate'); renderDictProgress();
+      setTimeout(() => playCurrentWord(0), 300);
+      btnStartDict.textContent = '🎧 开始听写';
+      btnStartDict.onclick = startDictationRound;
+    };
+  }
+}
+
+function showDictSuccess() {
+  document.getElementById('successDetail').textContent =
+    '共用了 ' + dictState.totalRounds + ' 轮，全部掌握！';
+  showDictStep('success');
+}
+
+function finishDictation() {
+  clearWrongBookForUnit(dictState.textbookId, dictState.unitId);
+  const btnStartDict = document.getElementById('btnStartDict');
+  if (btnStartDict) { btnStartDict.textContent = '🎧 开始听写'; btnStartDict.onclick = startDictationRound; }
+  // 完成关联的任务并发放积分
+  if (dictState.taskId) {
+    completeTaskById(dictState.taskId);
+    dictState.taskId = null;
+  }
+  showDictStep('select');
+  showToast('🎉 听写任务完成，积分已发放！');
+}
+
+function getWrongBook() { return Store.get('wrongBook', []); }
+function updateWrongBook(words) {
+  const book = getWrongBook();
+  words.forEach(w => { if (!book.includes(w)) book.push(w); });
+  Store.set('wrongBook', book);
+}
+function clearWrongBookForUnit(tid, uid) {
+  const book = getWrongBook();
+  const uw = TEXTBOOK_DATA.english[tid]?.units[uid]?.words.map(w => w.word) || [];
+  Store.set('wrongBook', book.filter(w => !uw.includes(w)));
+}
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
 }
 
 // ===== 拍照提交 =====
@@ -1249,5 +1527,4 @@ function renderPoints() {
       <div class="history-item-points">+${p.points}</div>
     </div>
   `).join('');
-}
 }
