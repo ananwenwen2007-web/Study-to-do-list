@@ -681,12 +681,16 @@ function initReadingSelect() {
   // 语文课文
   console.log('TEXTBOOK_DATA.chinese:', TEXTBOOK_DATA.chinese ? 'exists' : 'missing');
   if (TEXTBOOK_DATA.chinese) {
+    console.log('chinese keys:', Object.keys(TEXTBOOK_DATA.chinese));
+    Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
+      console.log('publisher:', publisher, 'grades:', Object.keys(TEXTBOOK_DATA.chinese[publisher]));
     Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
       Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
         Object.keys(TEXTBOOK_DATA.chinese[publisher][grade]).forEach(unit => {
           const opt = document.createElement('option');
           opt.value = 'cn|' + publisher + '|' + grade + '|' + unit;
           opt.textContent = publisher + ' ' + grade + ' ' + unit;
+          console.log('Adding option:', opt.textContent);
           select.appendChild(opt);
         });
       });
