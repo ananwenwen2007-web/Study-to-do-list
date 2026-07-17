@@ -25,13 +25,13 @@ function speak(text, lang, onEnd) {
     if (onEnd) onEnd();
     return;
   }
-  window.speechSynthesis.cancel();
+  // Don't cancel on mobile - it can interrupt playback
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang || 'zh-CN';
   utterance.rate = 0.85;
   utterance.pitch = 1;
   utterance.onend = function() { if (onEnd) onEnd(); };
-  utterance.onerror = function() { if (onEnd) onEnd(); };
+  utterance.onerror = function(e) { console.log('TTS error:', e); if (onEnd) onEnd(); };
   window.speechSynthesis.speak(utterance);
 }
 
@@ -1170,6 +1170,11 @@ function finishDictation() {
   if (dictState.taskId) {
     completeTaskById(dictState.taskId);
     dictState.taskId = null;
+    // 强制刷新积分显示
+    setTimeout(() => {
+      updatePointsBadge();
+      renderPoints();
+    }, 100);
   }
   showDictStep('select');
   showToast('🎉 听写任务完成，积分已发放！');
