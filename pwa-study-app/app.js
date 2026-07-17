@@ -555,22 +555,6 @@ function populateTextbookSelect() {
     });
   }
 
-  // 英语课文
-  console.log('TEXTBOOK_DATA.english:', TEXTBOOK_DATA.english ? 'exists' : 'missing');
-  if (TEXTBOOK_DATA.english) {
-    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
-      const tb = TEXTBOOK_DATA.english[publisher];
-      if (tb.units) {
-        Object.keys(tb.units).forEach(unit => {
-          const opt = document.createElement('option');
-          opt.value = 'en|' + publisher + '||' + unit;
-          opt.textContent = ' 英语 ' + (tb.name || publisher) + ' ' + tb.units[unit].title;
-          select.appendChild(opt);
-        });
-      }
-    });
-  }
-
   // 古文诗歌
   if (TEXTBOOK_DATA.classical) {
     Object.keys(TEXTBOOK_DATA.classical).forEach(category => {
@@ -606,7 +590,7 @@ function onTextbookSelectChange() {
 
 function getTextbookContent(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.reading || null;
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words?.map(w => w.word + ' ' + w.meaning).join('\n') || null;
     if (type === 'cn') return TEXTBOOK_DATA.chinese[publisher]?.[grade]?.[unit]?.reading || null;
     if (type === 'cl') return TEXTBOOK_DATA.classical[publisher]?.[unit]?.reading || null;
   } catch { return null; }
@@ -615,7 +599,7 @@ function getTextbookContent(type, publisher, grade, unit) {
 
 function getTextbookWords(type, publisher, grade, unit) {
   try {
-    if (type === 'en') return null;
+    if (type === 'en') return TEXTBOOK_DATA.english[publisher]?.units?.[unit]?.words || null;
   } catch { return null; }
   return null;
 }
@@ -668,47 +652,22 @@ function saveTask() {
 
 // ===== 朗读打卡 =====
 function initReadingSelect() {
-  console.log('initReadingSelect called');
   const select = document.getElementById('readingSelect');
-  if (!select) {
-    console.log('readingSelect element not found');
-    return;
-  }
-  console.log('readingSelect element found');
+  if (!select) return;
 
   select.innerHTML = '<option value="">-- 选择课文 --</option>';
 
   // 语文课文
-  console.log('TEXTBOOK_DATA.chinese:', TEXTBOOK_DATA.chinese ? 'exists' : 'missing');
   if (TEXTBOOK_DATA.chinese) {
-    console.log('chinese keys:', Object.keys(TEXTBOOK_DATA.chinese));
     Object.keys(TEXTBOOK_DATA.chinese).forEach(publisher => {
-      console.log('publisher:', publisher, 'grades:', Object.keys(TEXTBOOK_DATA.chinese[publisher]));
       Object.keys(TEXTBOOK_DATA.chinese[publisher]).forEach(grade => {
         Object.keys(TEXTBOOK_DATA.chinese[publisher][grade]).forEach(unit => {
           const opt = document.createElement('option');
           opt.value = 'cn|' + publisher + '|' + grade + '|' + unit;
           opt.textContent = publisher + ' ' + grade + ' ' + unit;
-          console.log('Adding option:', opt.textContent);
           select.appendChild(opt);
         });
       });
-    });
-  }
-
-  // 英语课文
-  console.log('TEXTBOOK_DATA.english:', TEXTBOOK_DATA.english ? 'exists' : 'missing');
-  if (TEXTBOOK_DATA.english) {
-    Object.keys(TEXTBOOK_DATA.english).forEach(publisher => {
-      const tb = TEXTBOOK_DATA.english[publisher];
-      if (tb.units) {
-        Object.keys(tb.units).forEach(unit => {
-          const opt = document.createElement('option');
-          opt.value = 'en|' + publisher + '||' + unit;
-          opt.textContent = ' 英语 ' + (tb.name || publisher) + ' ' + tb.units[unit].title;
-          select.appendChild(opt);
-        });
-      }
     });
   }
 
@@ -724,8 +683,7 @@ function initReadingSelect() {
     });
   }
 
-  select.addEventListener('change', (e) => {
-    console.log('Select changed:', e.target.value);
+  select.addEventListener('change', () => {
     const val = select.value;
     const contentEl = document.getElementById('readingContent');
     if (!contentEl) return;
